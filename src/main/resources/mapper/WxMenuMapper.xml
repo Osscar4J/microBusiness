@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.zhao.micro.mapper.WxMenuMapper">
+    <resultMap type="com.zhao.micro.entity.WxMenu" id="BaseResultMap">
+        <id column="id" property="id"/>
+        <result column="status" property="status"/>
+        <result column="parent_id" property="parentId"/>
+        <result column="type" property="type"/>
+        <result column="wx_key" property="wxKey"/>
+        <result column="sort_no" property="sortNo"/>
+        <result column="menu_lv" property="menuLv"/>
+        <result column="service_id" property="serviceId"/>
+        <result column="name" property="name"/>
+        <result column="url" property="url"/>
+        <result column="appid" property="appid"/>
+        <result column="pagepath" property="pagepath"/>
+        <result column="create_time" property="createTime"/>
+        <result column="info" property="info"/>
+    </resultMap>
+
+    <resultMap id="SubListRM" type="com.zhao.micro.entity.WxMenu" extends="BaseResultMap">
+        <collection property="subList" ofType="com.zhao.micro.entity.WxMenu">
+            <id column="pId" property="id"/>
+            <result column="pStatus" property="status"/>
+            <result column="pType" property="type"/>
+            <result column="pWxKey" property="wxKey"/>
+            <result column="pSortNo" property="sortNo"/>
+            <result column="pMenuLv" property="menuLv"/>
+            <result column="pServiceId" property="serviceId"/>
+            <result column="pName" property="name"/>
+            <result column="pUrl" property="url"/>
+            <result column="pAppid" property="appid"/>
+            <result column="pPagepath" property="pagepath"/>
+            <result column="pInfo" property="info"/>
+        </collection>
+    </resultMap>
+
+    <sql id="BaseSelectColumn">
+        self.id,
+        self.status,
+        self.parent_id,
+        self.type,
+        self.wx_key,
+        self.sort_no,
+        self.menu_lv,
+        self.service_id,
+        self.name,
+        self.url,
+        self.appid,
+        self.pagepath,
+        self.create_time,
+        self.info
+    </sql>
+
+    <sql id="LinkedSql">
+        from wx_menu_tb self
+    </sql>
+
+    <sql id="PageConditionSql">
+        where self.status!=-1
+        <if test="reqvo.status!= null">
+            and self.status=#{reqvo.status}
+        </if>
+    </sql>
+
+    <select id="selectPage" resultMap="BaseResultMap">
+        select
+        <include refid="BaseSelectColumn"></include>
+        <include refid="LinkedSql"></include>
+        <include refid="PageConditionSql"></include>
+        order by self.id asc
+    </select>
+
+    <select id="selectAllByStatus" resultMap="SubListRM">
+        select
+        <include refid="BaseSelectColumn"></include>
+        ,p.id pId, p.status pStatus, p.type pType, p.wx_key pWxKey, p.sort_no pSortNo, p.menu_lv pMenuLv, p.service_id
+        pServiceId, p.name pName, p.url pUrl, p.appid pAppid, p.pagepath pPagepath, p.info pInfo
+        <include refid="LinkedSql"></include>
+        left join wx_menu_tb p on p.parent_id=self.id
+        where self.menu_lv=1
+        <if test="status!=null">
+            and p.status=#{status}
+        </if>
+        order by self.sort_no desc, p.sort_no desc
+    </select>
+
+</mapper>

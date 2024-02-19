@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title th:if="${qrcode != null && qrcode.status==1}" th:text="${qrcode.title}"></title>
+    <title th:if="${qrcode == null}">链接已失效</title>
+    <th:block th:replace="~{common/commonCss}"></th:block>
+    <style type="text/css">
+        body {
+            background-size: 100% 100%;
+            background-color: #ffffff;
+        }
+
+        .demo {
+            background-color: rgba(0, 0, 0, 0.6);
+            width: 100%;
+            height: 45px;
+            display: none;
+            line-height: 45px;
+            box-sizing: border-box;
+            padding-left: 15px;
+        }
+
+        .demo p {
+            color: #FFFFFF;
+        }
+
+        .demo a {
+            float: right;
+            line-height: 43px;
+            font-size: 28px;
+            padding-right: 15px;
+            color: #ffffff;
+        }
+
+        @media \0screen\,screen\9 {
+            .demo {
+                background-color: #000000;
+                filter: Alpha(opacity=50);
+                position: static;
+                *zoom: 1;
+            }
+
+            .demo p {
+                position: relative;
+            }
+        }
+
+        .bg2 {
+            background-color: #ffffff;
+            color: #ff580e;
+            text-align: center;
+            margin-top: 30px;
+            font-size: 18px;
+            font-weight: 600
+        }
+    </style>
+</head>
+<div th:if="${qrcode != null}" class="demo" style="display: block;"><p><img class="logo f-pr"
+                                                                            style="top:-2px;width:22px;"
+                                                                            src="/static/imgs/kkkkk.png">此微信二维码经过安全认证，可放心识别
+    <a id="close">×</a></p></div>
+<div class="page-wrapper">
+    <div class="main-container">
+        <div class="content f-tac" th:if="${qrcode != null}">
+            <div class="animated fadeIn">
+                <img th:src="${qrcode.fileUrl}" class="mw-100 mh-100">
+            </div>
+            <div class="bg2">长按二维码并识别，添加您的专属客服微信！</div>
+            <div class="animated faster fadeInUp mgt10 f-info f-fs16" style="padding: 10px 15px;"
+                 th:text="${qrcode.description}"></div>
+        </div>
+        <div class="content f-tac" th:if="${qrcode == null}">
+            <div class="animated faster fadeInUp mgt10 f-info f-fs18 mgt60">
+                链接已失效，请重新获取！
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript"
+        src="https://yangyangdeyi.oss-cn-shenzhen.aliyuncs.com/statis/js/2019823153660.js"></script>
+<script type="text/javascript">$(function () {
+    $('#close').click(function () {
+        $(this).parent().parent().fadeOut();
+    })
+});</script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.zhao.micro.mapper.DomainMapper">
+    <resultMap type="com.zhao.micro.entity.Domain" id="BaseResultMap">
+        <id column="id" property="id"/>
+        <result column="status" property="status"/>
+        <result column="name" property="name"/>
+        <result column="ip" property="ip"/>
+        <result column="provider" property="provider"/>
+        <result column="mark" property="mark"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="type" property="type"/>
+    </resultMap>
+
+    <sql id="BaseSelectColumn">
+        self.id, self.status, self.name, self.ip, self.provider, self.mark, self.create_time, self.update_time,
+        self.type
+    </sql>
+
+    <sql id="LinkedSql">
+        from domain_tb self
+    </sql>
+
+    <sql id="PageConditionSql">
+        where self.status!=-1
+        <if test="reqvo.name!=null and reqvo.name!=''">
+            and self.name=#{reqvo.name}
+        </if>
+        <if test="reqvo.status!=null">
+            and self.status=#{reqvo.status}
+        </if>
+        <if test="reqvo.type!=null">
+            and self.type=#{reqvo.type}
+        </if>
+    </sql>
+
+    <select id="selectPage" resultMap="BaseResultMap">
+        select
+        <include refid="BaseSelectColumn"></include>
+        <include refid="LinkedSql"></include>
+        <include refid="PageConditionSql"></include>
+        order by self.id desc
+    </select>
+
+</mapper>

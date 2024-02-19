@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>注册</title>
+    <th:block th:replace="~{common/commonCss}"></th:block>
+</head>
+<body>
+<div class="page-wrapper flex-row align-items-center">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-5">
+                <form class="card p-4" method="post" th:action="${'/register/' + userId}" onsubmit="return checkForm()">
+                    <div class="card-header text-center text-uppercase h4 font-weight-light">
+                        注册
+                    </div>
+
+                    <div class="card-body py-5">
+                        <div class="form-group">
+                            <label class="form-control-label">邮箱</label>
+                            <input type="email" class="form-control" name="email">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-control-label">密码</label>
+                            <input type="password" class="form-control" name="passwd" id="pwd1">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-control-label">确认密码</label>
+                            <input type="password" class="form-control" id="pwd2">
+                        </div>
+                        <input type="hidden" th:value="${userId}" name="recommendId">
+                    </div>
+                    <div class="f-tac f-danger" th:text="${errMsg}" id="errMsg"></div>
+                    <div class="card-footer">
+                        <button type="submit" class="btn btn-success btn-block">注册账号</button>
+                        <div class="f-tac mgt10">
+                            <a href="/login">登录</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<th:block th:replace="~{common/commonJs}"></th:block>
+<script type="text/javascript">
+    function checkForm() {
+        if ($('#pwd1').val() != $('#pwd2').val()) {
+            $('#errMsg').text('两次密码不一样');
+            return false;
+        }
+        return true;
+    }
+</script>
+</body>
+</html>

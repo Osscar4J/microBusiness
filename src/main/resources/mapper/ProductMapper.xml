@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.zhao.micro.mapper.ProductMapper">
+    <resultMap type="com.zhao.micro.entity.Product" id="BaseResultMap">
+        <id column="id" property="id"/>
+        <result column="status" property="status"/>
+        <result column="name" property="name"/>
+        <result column="click_count" property="clickCount"/>
+        <result column="price" property="price"/>
+        <result column="origin_price" property="originPrice"/>
+        <result column="remain" property="remain"/>
+        <result column="sell_count" property="sellCount"/>
+        <result column="act_sell_count" property="actSellCount"/>
+        <result column="create_by" property="createBy"/>
+        <result column="update_by" property="updateBy"/>
+        <result column="summary" property="summary"/>
+        <result column="cover" property="cover"/>
+        <result column="content" property="content"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <resultMap id="DetaulResultRM" type="com.zhao.micro.entity.Product" extends="BaseResultMap">
+        <collection property="banners" ofType="com.zhao.micro.entity.ProdPic">
+            <id column="bId" property="id"/>
+            <result column="bFileUrl" property="fileUrl"/>
+        </collection>
+        <collection property="properties" ofType="com.zhao.micro.entity.ProdProperty">
+            <id column="pId" property="id"/>
+            <result column="pName" property="name"/>
+            <collection property="items" ofType="com.zhao.micro.entity.ProdPropertyItem">
+                <id column="itemId" property="id"/>
+                <result column="itemName" property="name"/>
+                <result column="itemPropertyId" property="propertyId"/>
+                <result column="itemRemain" property="remain"/>
+            </collection>
+        </collection>
+    </resultMap>
+
+    <sql id="BaseSelectColumn">
+        self.id, self.status, self.name, self.click_count, self.price, self.origin_price, self.remain, self.sell_count,
+        self.act_sell_count,
+        self.create_by, self.update_by, self.update_by, self.summary, self.cover, self.create_time, self.update_time
+    </sql>
+
+    <sql id="LinkedSql">
+        from product_tb self
+    </sql>
+
+    <sql id="PageConditionSql">
+        where self.status!=-1
+        <if test="reqvo.name!=null and reqvo.name!=''">
+            and self.name like #{reqvo.name}
+        </if>
+        <if test="reqvo.status!=null">
+            and self.status=#{reqvo.status}
+        </if>
+        <if test="reqvo.id!=null">
+            and self.id=#{reqvo.id}
+        </if>
+    </sql>
+
+    <select id="selectPage" resultMap="BaseResultMap">
+        select
+        <include refid="BaseSelectColumn"></include>
+        <include refid="LinkedSql"></include>
+        <include refid="PageConditionSql"></include>
+        order by self.id desc
+    </select>
+
+    <select id="selectDetail" resultMap="DetaulResultRM">
+        select
+        <include refid="BaseSelectColumn"></include>, self.content
+        ,b.id bId, b.file_url bFileUrl
+        ,p.id pId, p.name pName
+        ,ppl.property_item_id itemId, ppl.name itemName, ppl.property_id itemPropertyId, ppl.remain itemRemain
+        <include refid="LinkedSql"></include>
+        LEFT JOIN prod_pic_tb b on b.prod_id=self.id
+        LEFT JOIN prod_property_lk_tb ppl on ppl.prod_id=self.id
+        LEFT JOIN pproperty_tb p on p.id=ppl.property_id
+        LEFT JOIN prod_property_item_tb pItem on pItem.property_id=p.id
+        <include refid="PageConditionSql"></include>
+    </select>
+
+</mapper>

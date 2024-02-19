@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Blank</title>
+    <th:block th:replace="~{common/commonCss}"></th:block>
+</head>
+<body class="sidebar-fixed header-fixed">
+<div class="page-wrapper">
+    <th:block th:replace="~{user/common/header}"></th:block>
+
+    <div class="main-container">
+        <th:block th:replace="~{user/common/sideBar}"></th:block>
+
+        <div class="content" id="app" v-cloak>
+            <div class="card">
+                <div class="card-header bg-light">上传文件到OSS</div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label class="form-control-label require">选择文件</label>
+                        <input type="file" name="coverFile" ref="filePicker" @change="fileChanged">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-control-label require">上传路径</label>
+                        <input type="text" class="form-control" v-model="savePath" maxlength="140">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-control-label require">上传结果</label>
+                        <input type="text" class="form-control" v-model="fileUrl" readonly>
+                    </div>
+                    <div class="f-tac f-info mgt10" v-show="uploading">正在上传...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<th:block th:replace="~{common/commonJs}"></th:block>
+<th:block th:replace="~{common/commonJs2}"></th:block>
+<script type="text/javascript">
+    (function () {
+        var app = new Vue({
+            data: {
+                uploading: false,
+                savePath: "",
+                fileUrl: null
+            },
+            methods: {
+                fileChanged: function (e) {
+                    var file = e.target.files[0];
+                    if (!file)
+                        return false;
+                    this.uploading = true;
+                    CommonUtils.uploadFile({
+                        data: {file: file, action: 'uploadimage', path: this.savePath},
+                        url: 'file',
+                        always: function (res) {
+                            app.uploading = false;
+                            if (res.data.code == 'success') {
+                                app.fileUrl = res.data.fullUrl;
+                            } else {
+                                CommonUtils.toast(res.data.msg);
+                            }
+                        }
+                    });
+                }
+            }
+        }).$mount('#app');
+    })();
+</script>
+</body>
+</html>

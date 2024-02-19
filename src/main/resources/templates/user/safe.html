@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>账号安全</title>
+    <th:block th:replace="~{common/commonCss}"></th:block>
+</head>
+<body class="sidebar-fixed header-fixed">
+<div class="page-wrapper">
+    <th:block th:replace="~{user/common/header}"></th:block>
+
+    <div class="main-container">
+        <th:block th:replace="~{user/common/sideBar}"></th:block>
+
+        <div class="content" id="app" v-cloak>
+            <div class="card">
+                <div class="card-header bg-light">
+                    <span>支付配置</span>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label class="form-control-label">Aid</label>
+                        <input class="form-control" v-model="payModel.appid">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-control-label">App secret</label>
+                        <input class="form-control" v-model="payModel.secret">
+                    </div>
+                    <div class="form-group f-tac">
+                        <button class="btn btn-primary btn-sm w-25" @click="savePaySecret">保存</button>
+                    </div>
+                </div>
+            </div>
+            <!--<div class="card">-->
+            <!--<div class="card-header bg-light">-->
+            <!--<span>IP白名单管理</span>-->
+            <!--</div>-->
+            <!--<div class="card-body">-->
+            <!--<div class="form-group">-->
+            <!--<label class="form-control-label">IP白名单列表，一行一个（支持*通配符）</label>-->
+            <!--<textarea class="form-control" v-model="form" style="min-height: 300px;"></textarea>-->
+            <!--</div>-->
+            <!--<div class="form-group f-tac">-->
+            <!--<button class="btn btn-primary btn-sm w-25" @click="save">保存</button>-->
+            <!--</div>-->
+            <!--</div>-->
+            <!--</div>-->
+        </div>
+    </div>
+</div>
+<th:block th:replace="~{common/commonJs}"></th:block>
+<th:block th:replace="~{common/commonJs2}"></th:block>
+<script th:inline="javascript">
+    (function () {
+        var app = new Vue({
+            data: {form: null, payModel: {appid: [[${appid}]], secret: [[${appsecret}]]}},
+            mounted: function () {
+                this.getData()
+            },
+            methods: {
+                getData: function () {
+                    CommonUtils.request({
+                        url: 'sys/ipWhite',
+                        success: function (res) {
+                            var data = res.data.content || [];
+                            app.form = data.replace(/,/g, '\n');
+                        }
+                    })
+                },
+                save: function () {
+                    this.form = $.trim(this.form);
+                    CommonUtils.request({
+                        url: 'sys/ipWhite', data: {ip: this.form.replace(/\n/g, ',')}, config: {method: 'POST'},
+                        always: function (res) {
+                            CommonUtils.toast(res.data.msg)
+                        }
+                    })
+                },
+                savePaySecret: function () {
+                    CommonUtils.request({
+                        url: 'sys/paySecret',
+                        data: this.payModel,
+                        config: {method: 'POST'},
+                        always: function (res) {
+                            CommonUtils.toast(res.data.msg);
+                        }
+                    });
+                }
+            }
+        }).$mount('#app');
+    })();
+</script>
+</body>
+</html>

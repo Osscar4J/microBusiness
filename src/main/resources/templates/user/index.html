@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>控制台</title>
+    <th:block th:replace="~{common/commonCss}"></th:block>
+</head>
+<body class="sidebar-fixed header-fixed">
+<div class="page-wrapper">
+    <th:block th:replace="~{user/common/header}"></th:block>
+    <div class="main-container">
+        <th:block th:replace="~{user/common/sideBar}"></th:block>
+
+        <div class="content">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-md-3" th:if="${session.user_session.roleId==1}">
+                        <div class="card p-4">
+                            <div class="card-body d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="h4 d-block font-weight-normal mb-2" th:text="${userCount}"></span>
+                                    <span class="font-weight-light">总用户</span>
+                                </div>
+
+                                <div class="h2 text-muted">
+                                    <i class="icon icon-people"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div th:class="${session.user_session.roleId==1?'col-md-3':'col-md-6'}">
+                        <div class="card p-4">
+                            <div class="card-body d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="h4 d-block font-weight-normal mb-2"
+                                          th:text="${'￥'+amount/100.0}"></span>
+                                    <span class="font-weight-light">营业额</span>
+                                </div>
+
+                                <div class="h2 text-muted">
+                                    <i class="icon icon-wallet"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3" th:if="${session.user_session.roleId==1}">
+                        <div class="card p-4">
+                            <div class="card-body d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="h4 d-block font-weight-normal mb-2" th:text="${proxyCount}"></span>
+                                    <span class="font-weight-light">代理</span>
+                                </div>
+
+                                <div class="h2 text-muted">
+                                    <i class="icon icon-cloud-download"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div th:class="${session.user_session.roleId==1?'col-md-3':'col-md-6'}">
+                        <div class="card p-4">
+                            <div class="card-body d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="h4 d-block font-weight-normal mb-2" th:text="${microCount}"></span>
+                                    <span class="font-weight-light">员工</span>
+                                </div>
+
+                                <div class="h2 text-muted">
+                                    <i class="icon icon-clock"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row ">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                最近1个月营业统计
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="p-4">
+                                    <canvas id="line-chart" width="100%" height="20"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<th:block th:replace="~{common/commonJs}"></th:block>
+<th:block th:replace="~{common/commonJs2}"></th:block>
+<script src="https://yangyangdeyi.oss-cn-shenzhen.aliyuncs.com/statis/js/2019823153911551.js"></script>
+<script type="text/javascript">
+    (function () {
+        CommonUtils.request({
+            url: 'order/amountStat',
+            success: function (res) {
+                var data = res.data.content || [];
+                var stamp = new Date().getTime();
+                var t = new Date();
+                t.setDate(t.getDate() - 30);
+                var contains = false;
+                for (var i = 1; t.getTime() <= stamp; i++) {
+                    contains = false;
+                    for (var j = 0; j < data.length; j++) {
+                        if (data[j].date == t.Format('yyyy-MM-dd')) {
+                            contains = true;
+                            break;
+                        }
+                    }
+                    if (!contains) {
+                        data.push({date: t.Format('yyyy-MM-dd'), sum: 0});
+                    }
+                    t.setDate(t.getDate() + 1);
+                }
+                data.sort(function (a, b) {
+                    return a.date > b.date ? 1 : -1
+                });
+                renderChart($.map(data, function (d) {
+                    return d.date;
+                }), $.map(data, function (d) {
+                    return d.sum / 100;
+                }));
+            }
+        });
+
+        function renderChart(labels, data) {
+            new Chart($('#line-chart'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '金额',
+                        data: data,
+                        backgroundColor: 'rgba(66, 165, 245, 0.5)',
+                        borderColor: '#2196F3',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    legend: {display: false},
+                    scales: {
+                        yAxes: [{
+                            ticks: {beginAtZero: true}
+                        }]
+                    }
+                }
+            });
+        }
+    })();
+</script>
+</body>
+</html>

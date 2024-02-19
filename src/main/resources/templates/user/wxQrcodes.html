@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title th:text="${qrcode.title}"></title>
+    <th:block th:replace="~{common/commonCss}"></th:block>
+    <style type="text/css">
+        .panel {
+            background: #fff;
+            padding: 5px;
+            border-radius: 10px;
+            -webkit-border-radius: 10px;
+            margin: 10px;
+        }
+
+        .img-wrapper {
+            height: 200px;
+            width: 100%;
+            line-height: 200px;
+            border: 1px dashed #cccccc;
+        }
+
+        .img-wrapper img {
+            max-width: 100%;
+            max-height: 100%;
+        }
+    </style>
+</head>
+<body class="sidebar-fixed header-fixed">
+<div class="page-wrapper">
+    <th:block th:replace="~{user/common/header}"></th:block>
+
+    <div class="main-container">
+        <th:block th:replace="~{user/common/sideBar}"></th:block>
+
+        <div class="content f-fs16" id="app" v-cloak>
+            <div class="panel">
+                <div class="f-tac f-fs16">{{entity.title}}</div>
+                <div>
+                    <label>随机展示：</label>
+                    <div style="text-indent: 1em;" class="f-fwb">
+                        <span v-if="entity.isRandom==1">是</span>
+                        <span v-else>否</span>
+                    </div>
+                </div>
+                <div v-if="!!entity.content">
+                    <label>简介：</label>
+                    <pre class="f-fs14" style="text-indent: 1em;">{{entity.content}}</pre>
+                </div>
+            </div>
+            <div class="panel" v-for="item in wxQrcodes">
+                <div class="f-tac">
+                    <img :src="item.fileUrl" style="max-width: 100%;">
+                </div>
+                <div>
+                    <div class="f-cb">
+                        <div class="f-fl">标题</div>
+                        <div class="f-fr">{{item.title}}</div>
+                    </div>
+                    <div class="f-cb">
+                        <div class="f-fl">阈值</div>
+                        <div class="f-fr">{{item.changeLimit}}</div>
+                    </div>
+                    <div class="f-cb">
+                        <div class="f-fl">浏览次数</div>
+                        <div class="f-fr">{{item.scanTimes}}</div>
+                    </div>
+                </div>
+                <div class="f-tac">
+                    <button class="w-25 btn btn-sm btn-danger" @click="remove(item.id)">删除</button>
+                </div>
+            </div>
+            <div class="f-tac w-100 mgt10 f-mgb10">
+                <button class="btn btn-sm btn-primary w-50" data-toggle="modal" data-target="#usersDialog"
+                        @click="editQrcode({})">添加微信码
+                </button>
+            </div>
+
+            <div class="modal fade" id="usersDialog" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+                 aria-hidden="true">
+                <div class="modal-dialog modal-lg" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">编辑</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label class="form-control-label require">标题</label>
+                                <input type="text" class="form-control" v-model="qrcode.title" maxlength="140">
+                            </div>
+                            <div class="img-wrapper f-tac f-oh" @click="chooseFile()">
+                                <img v-if="!!qrcode.fileUrl" :src="qrcode.fileUrl">
+                                <i v-else class="fa fa-plus f-info"></i>
+                            </div>
+                            <div class="f-tac f-info" v-show="uploading">正在上传...</div>
+                            <div class="form-group mgt5">
+                                <label class="form-control-label require">阈值</label>
+                                <input type="number" class="form-control" v-model="qrcode.changeLimit" maxlength="9">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-control-label">简介</label>
+                                <textarea class="form-control" v-model="qrcode.content" placeholder="输入简介，140字以内"
+                                          maxlength="140"></textarea>
+                            </div>
+                            <button class="btn btn-primary w-100" @click="saveQrcode()">提交</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <input type="file" name="coverFile" ref="filePicker" class="f-dn" @change="fileChanged">
+        </div>
+    </div>
+</div>
+<th:block th:replace="~{common/commonJs}"></th:block>
+<th:block th:replace="~{common/commonJs2}"></th:block>
+<script src="https://yangyangdeyi.oss-cn-shenzhen.aliyuncs.com/statis/js/2019823153911551.js"></script>
+<script th:inline="javascript">
+    (function () {
+        var app = new Vue({
+            data: {
+                entity: [[${qrcode != null ? qrcode : null}]],
+                qrcode: {},
+                uploading: false,
+                wxQrcodes: []
+            },
+            mounted: function () {
+                this.getWxQrcodes();
+            },
+            methods: {
+                remove: function (id) {
+                    confirm('确定要删除吗？') && CommonUtils.request({
+                        url: 'qrcode/wechat/' + id,
+                        config: {method: 'DELETE'},
+                        always: function (res) {
+                            CommonUtils.toast(res.data.msg);
+                            app.getWxQrcodes();
+                        }
+                    })
+                },
+                getWxQrcodes: function () {
+                    CommonUtils.request({
+                        url: 'user/qrcode/' + this.entity.id,
+                        success: function (res) {
+                            app.wxQrcodes = res.data.content || [];
+                        }
+                    })
+                },
+                editQrcode: function (item) {
+                    this.qrcode = $.extend({}, item)
+                },
+                saveQrcode: function () {
+                    this.qrcode.qrcodeId = this.entity.id;
+                    CommonUtils.request({
+                        url: 'qrcode/wechat',
+                        data: this.qrcode,
+                        config: {method: 'POST'},
+                        success: function (res) {
+                            $('#usersDialog').modal('hide');
+                            app.getWxQrcodes();
+                        },
+                        always: function (res) {
+                            CommonUtils.toast(res.data.msg);
+                        }
+                    });
+                },
+                chooseFile: function (type) {
+                    this.currentFileType = type;
+                    this.$refs.filePicker.click()
+                },
+                fileChanged: function (e) {
+                    var file = e.target.files[0];
+                    if (!file)
+                        return false;
+                    this.uploading = true;
+                    CommonUtils.uploadFile({
+                        data: {file: file, action: 'uploadimage', path: 'user/qrcode/'},
+                        url: 'file',
+                        always: function (res) {
+                            app.uploading = false;
+                            if (res.data.code == 'success') {
+                                app.qrcode.fileUrl = res.data.fullUrl;
+                            } else {
+                                CommonUtils.toast(res.data.msg);
+                            }
+                        }
+                    });
+                }
+            }
+        }).$mount('#app');
+    })();
+</script>
+</body>
+</html>

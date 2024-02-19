@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="format-detection" content="telephone=no">
+    <title>举报</title>
+    <link rel="stylesheet" href="/static/css/common/w_complain.css">
+</head>
+<body class="zh_CN " ontouchstart="">
+<div class="page_bd">
+    <div id="tips" style="display:none;" class="top_tips warning"></div>
+    <div id="step2" class="category_item">
+        <h3 class="category_title">举报描述</h3>
+        <form>
+            <div id="textareaDiv" class="textarea_panel"><textarea id="aaa" maxlength="50"></textarea><i
+                    id="reasonTextTips" class="ic ic_warning ic_small"></i><span id="textareaLenSpan"
+                                                                                 class="frm_hint"><span
+                    id="textLen">0</span>/50</span></div>
+        </form>
+        <div class="opr_area">
+            <a id="submitBtn" href="/report3" class="btn btn_primary btn_disabled js_btn_submit">提交</a>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    (function () {
+        var count = document.getElementById('textLen');
+        var txt = document.getElementById('aaa');
+        txt.addEventListener('keyup', function (ev) {
+            count.innerText = txt.value.length;
+        });
+    })();
+</script>
+</body>
+</html>

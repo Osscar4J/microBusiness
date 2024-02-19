@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.zhao.micro.mapper.UserMapper">
+    <resultMap type="com.zhao.micro.entity.User" id="BaseResultMap">
+        <id column="id" property="id"/>
+        <result column="status" property="status"/>
+        <result column="account" property="account"/>
+        <result column="passwd" property="passwd"/>
+        <result column="phone" property="phone"/>
+        <result column="role_id" property="roleId"/>
+        <result column="recommend_id" property="recommendId"/>
+        <result column="level" property="level"/>
+        <result column="email" property="email"/>
+        <result column="gender" property="gender"/>
+        <result column="nickname" property="nickname"/>
+        <result column="proxy_count" property="proxyCount"/>
+        <result column="login_days" property="loginDays"/>
+        <result column="max_login_days" property="maxLoginDays"/>
+        <result column="last_login_time" property="lastLoginTime"/>
+        <result column="birthday" property="birthday"/>
+        <result column="avatar" property="avatar"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <resultMap id="RoleResultRM" type="com.zhao.micro.entity.User" extends="BaseResultMap">
+        <association property="role" javaType="com.zhao.micro.entity.Role">
+            <id column="rId" property="id"/>
+            <result column="rName" property="name"/>
+        </association>
+    </resultMap>
+
+    <resultMap id="PerformanceResultRM" type="com.zhao.micro.entity.User" extends="BaseResultMap">
+        <result column="tc" property="tc"/>
+        <result column="yc" property="yc"/>
+        <result column="lwc" property="lwc"/>
+        <result column="tmc" property="tmc"/>
+    </resultMap>
+
+    <resultMap id="AddrResultRM" type="com.zhao.micro.entity.User" extends="BaseResultMap">
+        <association property="address" javaType="com.zhao.micro.entity.Address">
+            <id column="aId" property="id"/>
+            <result column="areaId" property="areaId"/>
+            <result column="addr" property="addr"/>
+        </association>
+    </resultMap>
+
+    <resultMap id="OrderStatisticsRM" type="com.zhao.micro.entity.User">
+        <id column="id" property="id"/>
+        <result column="account" property="account"/>
+        <result column="nickname" property="nickname"/>
+        <result column="amount" property="amount"/>
+    </resultMap>
+
+    <sql id="BaseSelectColumn">
+        self.id, self.status, self.account, self.phone, self.role_id, self.recommend_id, self.level, self.email,
+        self.gender, self.nickname, self.create_time, self.update_time, self.proxy_count, self.login_days,
+        self.max_login_days,
+        self.last_login_time, self.birthday, self.avatar
+    </sql>
+
+    <sql id="LinkedSql">
+        from user_tb self
+    </sql>
+
+    <sql id="PageConditionSql">
+        where self.status!=-1
+        <if test="reqvo.recommendId != null">
+            and self.recommend_id=#{reqvo.recommendId}
+        </if>
+        <if test="reqvo.phone != null and reqvo.phone!=''">
+            and self.phone=#{reqvo.phone}
+        </if>
+        <if test="reqvo.email!= null and reqvo.email!=''">
+            and self.email=#{reqvo.email}
+        </if>
+        <if test="reqvo.nickname!= null and reqvo.nickname!=''">
+            and self.nickname like #{reqvo.nickname}
+        </if>
+        <if test="reqvo.roleId!= null">
+            and self.role_id=#{reqvo.roleId}
+        </if>
+        <if test="reqvo.loginDays!= null">
+            and self.login_days>=#{reqvo.loginDays}
+        </if>
+        <if test="reqvo.status!= null">
+            and self.status=#{reqvo.status}
+        </if>
+    </sql>
+
+    <select id="selectByUsernamePasswd" resultMap="RoleResultRM">
+        select
+        <include refid="BaseSelectColumn"/>
+        ,r.id rId, r.name rName
+        <include refid="LinkedSql"/>
+        left join role_tb r on r.id=self.role_id
+        where self.status!=-1 and self.account=#{account}
+        <if test="passwd!=null">
+            and self.passwd=#{passwd}
+        </if>
+    </select>
+
+    <select id="selectPage" resultMap="BaseResultMap">
+        select
+        <include refid="BaseSelectColumn"></include>
+        <include refid="LinkedSql"></include>
+        <include refid="PageConditionSql"></include>
+        order by self.id desc
+    </select>
+
+    <select id="selectPerformance" resultMap="PerformanceResultRM">
+        SELECT self.id, self.account, self.nickname, t.todayCount tc, yt.yestodayCount yc, lw.lastWeekCount lwc,
+        m.monthCount tmc
+        FROM user_tb self
+        LEFT JOIN (
+        SELECT self.seller_id, COUNT(self.order_no) todayCount
+        FROM order_tb self WHERE DATE_FORMAT(self.create_time, '%Y-%m-%d')=#{today} and self.status=1
+        GROUP BY self.seller_id
+        ) t on t.seller_id=self.id
+        LEFT JOIN (
+        SELECT self.seller_id, COUNT(self.order_no) yestodayCount
+        FROM order_tb self WHERE DATE_FORMAT(self.create_time, '%Y-%m-%d')=#{yestoday} and self.status=1
+        GROUP BY self.seller_id
+        ) yt on yt.seller_id=self.id
+        LEFT JOIN (
+        SELECT self.seller_id, COUNT(self.order_no) lastWeekCount
+        FROM order_tb self
+        <![CDATA[WHERE self.create_time>#{weekSt} and self.create_time<=#{weekEt} and self.status=1]]>
+        GROUP BY self.seller_id
+        ) lw on lw.seller_id=self.id
+        LEFT JOIN (
+        SELECT self.seller_id, COUNT(self.order_no) monthCount
+        FROM order_tb self
+        <![CDATA[WHERE self.create_time>#{monthSt} and self.create_time<=#{monthEt} and self.status=1]]>
+        GROUP BY self.seller_id
+        ) m on m.seller_id=self.id
+        WHERE self.recommend_id=#{proxyId}
+    </select>
+
+    <select id="selectByPhoneWithAddr" resultMap="AddrResultRM">
+        select
+        <include refid="BaseSelectColumn"></include>
+        ,a.id aId, a.area_id areaId, a.addr
+        <include refid="LinkedSql"></include>
+        left join address_tb a on a.status!=-1 and a.user_id=self.id
+        where self.status!=-1 and self.phone=#{phone}
+    </select>
+
+    <select id="selectOrderStatistics" resultMap="OrderStatisticsRM">
+        SELECT self.id, self.account, self.nickname, o.totalFee as amount
+        FROM user_tb self
+        LEFT JOIN (
+        SELECT o.proxy_id, SUM(o.total_fee) totalFee
+        FROM order_tb o
+        where o.status=1
+        <if test="st!=null and et!=null and st!='' and et!=''">
+            <![CDATA[ and o.create_time>#{st} and o.create_time<#{et}]]>
+        </if>
+        GROUP BY o.proxy_id
+        ) o on o.proxy_id=self.id
+        WHERE self.role_id=2 and self.status!=-1 and o.totalFee>0
+        ORDER BY o.totalFee DESC
+        limit #{start}, #{end}
+    </select>
+
+</mapper>

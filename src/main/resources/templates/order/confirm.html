@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>确认订单</title>
+    <th:block th:replace="~{common/commonCss}"></th:block>
+    <style type="text/css">
+        .info-items > div {
+            padding: 10px 0;
+            border-bottom: 1px solid #ccc;
+            font-size: 16px;
+        }
+
+        .bt-nav {
+            display: flex;
+            width: 100vw;
+            height: 12vw;
+            background: #fafafa;
+            justify-content: space-around;
+        }
+
+        .bt-nav .btn {
+            cursor: pointer;
+            width: 100%;
+            line-height: 12vw;
+            text-align: center;
+            padding: 0;
+            vertical-align: baseline;
+            color: #ffffff;
+        }
+
+        .bt-nav .btn.order {
+            background-color: red;
+        }
+
+        .bt-nav.fixed {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            z-index: 9;
+        }
+
+        .bt-nav .btn.pay-success {
+            background-color: #5FB878;
+        }
+    </style>
+</head>
+<body>
+<div class="page-wrapper">
+    <div class="navbar page-header f-tac">
+        <span>特价抢购</span>
+    </div>
+    <div class="main-container">
+        <div class="content" id="app" v-cloak>
+            <div class="card">
+                <div class="card-body customer f-fs16" style="line-height: 180%;" th:if="${order.user != null}">
+                    <div class="f-fs18">
+                        <b th:text="${order.user.nickname}"></b>
+                        <b th:text="${order.user.phone}"></b>
+                    </div>
+                    <div class="addr" th:if="${order.user.address}">
+                        <span th:text="${order.user.address.addr}"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-5">
+                            <img th:src="${order.product.cover}">
+                        </div>
+                        <div class="col-7" style="line-height: 240%;">
+                            <div class="f-fs18" th:text="${order.name}"></div>
+                            <div class="f-fs16" th:text="${order.prodProperty}"></div>
+                            <div class="f-danger f-fs12">发货时限：订单自付款24小时内</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body info-items" style="padding-bottom: 0;padding-top: 0;">
+                    <div class="f-cb">
+                        <div class="f-fl">公益宝贝</div>
+                        <div class="f-fr">捐赠成交金额0.3%用于公益事业</div>
+                    </div>
+                    <div class="f-cb">
+                        <div class="f-fl">配送方式</div>
+                        <div class="f-fr">免邮 普通快递</div>
+                    </div>
+                    <div class="f-cb">
+                        <div class="f-fl">下单时间</div>
+                        <div class="f-fr" th:text="${#dates.format(order.createTime,'yyyy-MM-dd HH:mm:ss')}"></div>
+                    </div>
+                    <div class="f-cb">
+                        <div class="f-fl">订单编号</div>
+                        <div class="f-fr" th:text="${order.orderNo}"></div>
+                    </div>
+                    <div class="f-cb">
+                        <div class="f-fl">购买数量</div>
+                        <div class="f-fr" th:text="${order.prodCount}"></div>
+                    </div>
+                    <div class="f-cb" style="border-bottom: 0;">
+                        <div class="f-fl">应付金额</div>
+                        <div class="f-fr f-danger">
+                            <b>￥</b>
+                            <b th:text="${order.totalFee/100.0}"></b>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body" style="padding-bottom: 30px;">
+                    支付成功后，不要急于关闭页面，您的订单号会通过短信发送至您的手机，您也可以根据提示关注售后客服为您服务！感谢您的支持！
+                </div>
+            </div>
+
+            <div class="bt-nav f-tran fixed">
+                <div class="btn order" :class="{'pay-success':paySucc}">
+                    <div v-if="!paying && !paySucc" @click="toOrder">支付</div>
+                    <div v-else-if="paying">正在支付...</div>
+                    <div v-else-if="paySucc">已支付</div>
+                </div>
+            </div>
+
+            <div v-if="mask" class="f-pf animated slideInLeft faster"
+                 style="z-index:101;width:100%;height:100%;left:0;top:0;background:#000;opacity: .6;"></div>
+            <div v-if="mask" class="f-pf animated fadeInLeft faster w-75 f-tac"
+                 style="top:50px;left:12.5%;z-index: 101;">
+                <div class="card">
+                    <div class="card-body">
+                        <div>
+                            <img v-if="showKfQ" :src="KFQUrl">
+                            <span v-else class="f-info">加载中...</span>
+                        </div>
+                        <div class="f-info f-fs14">识别上方二维码添加售后客服微信，随时为您服务！</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://yangyangdeyi.oss-cn-shenzhen.aliyuncs.com/statis/js/2019823153660.js"></script>
+<th:block th:replace="~{common/commonJs2}"></th:block>
+<script src="/static/js/md5.js"></script>
+<script src="/static/js/common.min.js"></script>
+<script th:inline="javascript">
+    (function () {
+        var app = new Vue({
+            data: {
+                orderNo: [[${order.orderNo}]],
+                prodName: [[${order.name}]],
+                userId: [[${order.sellerId}]],
+                paySucc: [[${order.status==1}]],
+                paying: false,
+                mask: false,
+                showKfQ: false,
+                KFQUrl: null
+            },
+            methods: {
+                paySuccess: function () {
+                    CommonUtils.request({
+                        url: 'order/status',
+                        data: {orderNo: this.orderNo},
+                        success: function (res) {
+                            if (parseInt(res.data.content) == 1) {
+                                app.paySucc = true;
+                                CommonUtils.toast('支付成功!');
+                                setTimeout(function () {
+                                    location.href = '/page/3';
+                                }, 500);
+                            } else {
+                                CommonUtils.toast('尚未完成支付！');
+                            }
+                        },
+                        failure: function (res) {
+                            CommonUtils.toast(res.data.msg);
+                        }
+                    });
+                },
+                toOrder: function () {
+                    if (this.paying) {
+                        return false;
+                    }
+                    this.paying = true;
+                    CommonUtils.request({
+                        url: 'order/unified',
+                        data: {orderNo: this.orderNo},
+                        always: function (res) {
+                            app.paying = false;
+                        },
+                        failure: function (res) {
+                            CommonUtils.toast(res.data.msg)
+                        },
+                        success: function (res) {
+                            // wechat pay
+                            var payStr = JSON.parse(res.data.content.payStr);
+                            WeixinJSBridge.invoke('getBrandWCPayRequest',{
+                                'appId': payStr.appid,
+                                'timeStamp': res.data.content.timeStamp,
+                                'nonceStr': res.data.content.nonceStr,
+                                'package': 'prepay_id=' + payStr.prepay_id,
+                                'signType': 'MD5',
+                                'paySign': res.data.content.paySign
+                            }, function (res) {
+                                if(res.err_msg == "get_brand_wcpay_request:ok"){
+                                    app.paySuccess();
+                                } else {
+                                    alert('支付失败！');
+                                }
+                            });
+                            // xorpay
+                            // WeixinJSBridge.invoke('getBrandWCPayRequest', {
+                            //     'appId': res.data.content.appid,
+                            //     'timeStamp': res.data.content.timeStamp,
+                            //     'nonceStr': res.data.content.nonceStr,
+                            //     'package': res.data.content.payStr,
+                            //     'signType': 'MD5',
+                            //     'paySign': res.data.content.paySign
+                            // }, function (res) {
+                            //     if (res.err_msg == "get_brand_wcpay_request:ok") {
+                            //         app.paySuccess();
+                            //     } else {
+                            //         alert('支付失败！')
+                            //     }
+                            // });
+                        }
+                    });
+                }
+            }
+        }).$mount('#app');
+    })();
+</script>
+</body>
+</html>

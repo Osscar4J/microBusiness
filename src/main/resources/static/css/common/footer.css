@@ -1,0 +1,76 @@
+.main-footer {
+    background: url("https://hwsj-website.oss-cn-beijing.aliyuncs.com/assets/foot_bg.png") center center no-repeat;
+    margin-top: 40px;
+    color: #ffffff;
+    padding-top: 40px;
+}
+
+.main-footer .rights {
+    border-top: 1px solid #555AA9;
+    height: 50px;
+    margin-top: 60px;
+}
+
+.main-footer .l {
+    width: 325px;
+}
+
+.main-footer .com-info {
+    margin-top: 15px;
+    line-height: 30px;
+}
+
+.main-footer .m > div {
+    border-right: 1px solid rgba(12, 95, 173, .4);
+    padding: 0 45px;
+}
+
+.main-footer .m > div.last {
+    border-right: none;
+}
+
+.main-footer .m .title {
+    border-bottom: 4px solid #0C5FAD;
+    padding: 0 10px;
+    line-height: 40px;
+}
+
+.main-footer .m .items {
+    line-height: 30px;
+    margin-top: 20px;
+}
+
+.main-footer .r > .f-fl {
+    margin-right: 25px;
+}
+
+.main-footer .r .title {
+    line-height: 40px;
+}
+
+.main-footer a {
+    color: #fff;
+}
+
+a:hover {
+    text-decoration: none;
+}
+
+@media (max-width: 767px) {
+    .main-footer {
+        padding-top: 0;
+        margin-top: 0;
+    }
+
+    .main-footer .links {
+        line-height: 50px;
+    }
+
+    .main-footer .links a {
+        color: #ffffff;
+    }
+
+    .main-footer .rights {
+        margin-top: 0;
+    }
+}

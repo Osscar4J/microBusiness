@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>个人中心</title>
+    <th:block th:replace="~{common/commonCss}"></th:block>
+    <style type="text/css">
+        .card-header, .card-body {
+            padding: .6rem;
+        }
+
+        .card {
+            margin-bottom: 1rem;
+        }
+
+        .active {
+            color: #0c87eb;
+        }
+
+        .img-wrapper {
+            height: 200px;
+            width: 100%;
+            line-height: 200px;
+            border: 1px dashed #cccccc;
+        }
+
+        .img-wrapper img {
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        .orders {
+            padding-bottom: 0;
+        }
+
+        .orders > .row {
+            border-bottom: 1px dashed #cccccc;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+        }
+    </style>
+</head>
+<body class="sidebar-fixed header-fixed">
+<div class="page-wrapper">
+    <th:block th:replace="~{user/common/header}"></th:block>
+
+    <div class="main-container">
+        <th:block th:replace="~{user/common/sideBar}"></th:block>
+
+        <div class="content" id="app" v-cloak>
+            <div class="card">
+                <div class="card-body animated fadeIn">
+                    嗨，<span th:text="${session.user_session.nickname}"></span>
+                </div>
+            </div>
+            <div class="card animated faster slideInUp">
+                <div class="card-header bg-light">常用功能</div>
+                <div class="card-body">
+                    <div class="row f-tac">
+                        <div class="col-6 f-csp" :class="{active: func==1}" @click="func=1;getQrcode();">
+                            <div><i class="fa fa-qrcode"></i></div>
+                            <div>微信活码</div>
+                        </div>
+                        <div class="col-6 f-csp" :class="{active: func==2}"
+                             @click="func=2;getOrderCount();orderReqvo.current==1?getOrders():null">
+                            <div><i class="fa fa-list-ol"></i></div>
+                            <div>最新订单</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div v-show="func==1" class="card animated faster fadeInUp">
+                <div class="card-header bg-light">
+                    <span v-if="func==1">微信活码 <span class="f-info f-fs12">点击活码即可修改哦</span></span>
+                    <span v-else-if="func==2">最新订单</span>
+                </div>
+                <div class="card-body">
+                    <div v-for="item in qrcodeList" data-toggle="modal" data-target="#usersDialog"
+                         @click="editQrcode(item)" style="padding: 4px 0 4px 0;border-bottom: 1px dashed #cccccc;">
+                        <div class="f-pr f-tac">
+                            <div class="w-100 f-fs16">{{item.title}}</div>
+                        </div>
+                        <div>随机显示：<span v-if="item.isRandom==1">是</span><span v-else>否</span></div>
+                        <div>微信二维码数量：{{item.wxCount}}</div>
+                        <div>
+                            <div>简介：</div>
+                            <pre>{{item.content}}</pre>
+                        </div>
+                        <div class="f-tac f-cb">
+                            <div class="w-25 f-fl">
+                                <button class="btn btn-sm btn-success" style="width: 80px;"
+                                        @click.stop="getShareCode(item.id)">获取转发码
+                                </button>
+                            </div>
+                            <div class="w-25 f-fl">
+                                <button class="btn btn-sm btn-primary" style="width: 80px;" data-toggle="modal"
+                                        data-target="#usersDialog" @click="editQrcode(item)">修改活码
+                                </button>
+                            </div>
+                            <div class="w-25 f-fl">
+                                <a :href="'/user/wxqrcode?id='+item.id">
+                                    <button class="btn btn-sm btn-secondary" style="width: 80px">查看</button>
+                                </a>
+                                <!--<button v-if="item.status==1" class="btn btn-sm btn-secondary" style="width: 80px;" @click.stop="updateStatus(item.id, 2)">停用</button>-->
+                                <!--<button v-else class="btn btn-sm btn-primary" style="width: 80px;" @click.stop="updateStatus(item.id, 1)">启用</button>-->
+                            </div>
+                            <div class="w-25 f-fl">
+                                <button class="btn btn-sm btn-danger" style="width: 80px;"
+                                        @click.stop="remove(item.id)">删除
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="mgt10 btn btn-primary w-100" data-toggle="modal" data-target="#usersDialog"
+                            @click="editQrcode({})">创建活码
+                    </button>
+                </div>
+            </div>
+
+            <div v-show="func==2" class="card animated faster fadeInUp">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-4">订单数量: <b class="f-primary">{{orderStat.total}}</b></div>
+                        <div class="col-4">已发货; <b class="f-success">{{orderStat.ems}}</b></div>
+                        <div class="col-4">未发货: <b class="f-danger">{{orderStat.nems}}</b></div>
+                    </div>
+                </div>
+            </div>
+
+            <div v-show="func==2" class="card animated faster fadeInUp">
+                <div class="card-body orders">
+                    <div class="row" v-for="item in orderData.records">
+                        <div class="col-4">
+                            <img v-if="item.product" :src="item.product.cover">
+                        </div>
+                        <div class="col-8">
+                            <div>
+                                <span>单号：</span>
+                                <span class="f-info">{{item.orderNo}}</span>
+                            </div>
+                            <div class="mgt5">
+                                <span>状态：</span>
+                                <span v-if="item.emsId==-1" class="f-tag bgc-inverse">待发货</span>
+                                <span v-else class="f-tag bgc-info">已发货</span>
+                            </div>
+                            <div class="mgt5">
+                                <span>时间：</span>
+                                <span class="f-info">{{new Date(item.createTime).Format('yyyy/MM/dd hh:mm:ss')}}</span>
+                            </div>
+                        </div>
+                        <div v-if="item.user" class="col-12 mgt5">
+                            <div class="f-cb">
+                                <div class="f-fl">
+                                    <span>收货人：</span>
+                                    <span>{{item.user.nickname}}</span>
+                                </div>
+                                <div class="f-fr">
+                                    <span>数量：</span>
+                                    <span>{{item.prodCount}}</span>
+                                    <span>单价：</span>
+                                    <span class="f-success">￥{{item.totalFee/100.0}} </span>
+                                </div>
+                            </div>
+                            <div v-if="item.user.address">
+                                <span>收货地址：</span>
+                                <span>{{item.user.address.addr}}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="f-tac f-csp f-fs12" style="margin-bottom: 10px;">
+                    <div v-if="!noMore" @click="getOrders(orderReqvo.current+1)">加载更多</div>
+                    <div v-else class="f-info">暂无更多</div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="usersDialog" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+                 aria-hidden="true">
+                <div class="modal-dialog modal-lg" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">编辑</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label class="form-control-label require">标题</label>
+                                <input type="text" class="form-control" v-model="qrcode.title" maxlength="140">
+                            </div>
+                            <!--<div class="img-wrapper f-tac f-oh" @click="chooseFile()">-->
+                            <!--<img v-if="!!qrcode.fileUrl" :src="qrcode.fileUrl">-->
+                            <!--<i v-else class="fa fa-plus f-info"></i>-->
+                            <!--</div>-->
+                            <div class="f-tac f-info" v-show="uploading">正在上传...</div>
+                            <div class="form-group mgt5">
+                                <label class="form-control-label">随机显示</label>
+                                <div>
+                                    <button class="btn btn-sm w-25"
+                                            @click="$set(qrcode,'isRandom',1)"
+                                            :class="{'btn-primary':qrcode.isRandom==1}">是
+                                    </button>
+                                    <button class="btn btn-sm w-25"
+                                            @click="$set(qrcode,'isRandom',0)"
+                                            :class="{'btn-primary':qrcode.isRandom==0}">否
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-control-label">简介</label>
+                                <textarea class="form-control" v-model="qrcode.content" placeholder="输入简介，140字以内"
+                                          maxlength="140"></textarea>
+                            </div>
+                            <button class="btn btn-primary w-100" @click="saveQrcode()">提交</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="shareQrcode" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+                 aria-hidden="true">
+                <div class="modal-dialog modal-lg" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">转发码</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="f-tac">
+                                <img v-if="!!imgUrl" :src="imgUrl">
+                                <span v-else>加载中...</span>
+                                <div class="mgt10 f-info">长按图片保存到手机</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <input type="file" name="coverFile" ref="filePicker" class="f-dn" @change="fileChanged">
+        </div>
+    </div>
+</div>
+<th:block th:replace="~{common/commonJs}"></th:block>
+<th:block th:replace="~{common/commonJs2}"></th:block>
+<script type="text/javascript">
+    (function () {
+        var app = new Vue({
+            data: {
+                uploading: false,
+                func: 1,
+                imgUrl: null,
+                qrcode: {title: null, fileUrl: null, content: null},
+                qrcodeList: [],
+                orderStat: {total: 0, ems: 0, nems: 0},
+                orderData: {records: [], pages: 1, current: 1},
+                orderReqvo: {current: 1},
+                noMore: false
+            },
+            mounted: function () {
+                this.getQrcode();
+            },
+            methods: {
+                getOrders: function (p) {
+                    this.orderReqvo.current = p || this.orderReqvo.current;
+                    CommonUtils.request({
+                        url: 'order', data: this.orderReqvo,
+                        success: function (res) {
+                            if (app.orderReqvo.current >= res.data.content.pages)
+                                app.noMore = true;
+                            if (app.orderReqvo.current == 1) {
+                                app.orderData.records = res.data.content.records || [];
+                            } else {
+                                app.orderData.records.push.apply(app.orderData.records, res.data.content.records || []);
+                            }
+                            app.orderData.pages = res.data.content.pages;
+                            app.orderData.current = res.data.content.current;
+                        }
+                    })
+                },
+                getOrderCount: function () {
+                    CommonUtils.request({
+                        url: 'order/count', success: function (res) {
+                            app.orderStat = res.data.content;
+                        }
+                    })
+                },
+                remove: function (id) {
+                    confirm('确定要删除吗?') && this.updateStatus(id, -1);
+                },
+                updateStatus: function (id, status) {
+                    this.qrcode = {id: id, status: status};
+                    this.saveQrcode();
+                },
+                getShareCode: function (id) {
+                    CommonUtils.request({
+                        url: 'user/generateQrcode',
+                        data: {id: id},
+                        success: function (res) {
+                            CommonUtils.request({
+                                url: 'qrcode',
+                                data: {content: res.data.content},
+                                success: function (res1) {
+                                    app.imgUrl = res1.data.content;
+                                }
+                            })
+                        },
+                        failure: function (res) {
+                            CommonUtils.toast(res.data.msg)
+                        }
+                    });
+                    $('#shareQrcode').modal('show');
+                },
+                editQrcode: function (item) {
+                    this.qrcode = $.extend({}, item)
+                },
+                getQrcode: function () {
+                    CommonUtils.request({
+                        url: 'user/qrcode',
+                        success: function (res) {
+                            app.qrcodeList = res.data.content || [];
+                        },
+                        failure: function (res) {
+                            CommonUtils.toast(res.data.msg);
+                        }
+                    });
+                },
+                saveQrcode: function () {
+                    CommonUtils.request({
+                        url: 'user/qrcode',
+                        data: this.qrcode,
+                        config: {method: 'POST'},
+                        success: function (res) {
+                            app.getQrcode();
+                            $('#usersDialog').modal('hide');
+                        },
+                        always: function (res) {
+                            CommonUtils.toast(res.data.msg);
+                        }
+                    });
+                },
+                chooseFile: function (type) {
+                    this.currentFileType = type;
+                    this.$refs.filePicker.click()
+                },
+                fileChanged: function (e) {
+                    var file = e.target.files[0];
+                    if (!file)
+                        return false;
+                    this.uploading = true;
+                    CommonUtils.uploadFile({
+                        data: {file: file, action: 'uploadimage', path: 'user/qrcode/'},
+                        url: 'file',
+                        always: function (res) {
+                            app.uploading = false;
+                            if (res.data.code == 'success') {
+                                app.qrcode.fileUrl = res.data.fullUrl;
+                            } else {
+                                CommonUtils.toast(res.data.msg);
+                            }
+                        }
+                    });
+                }
+            }
+        }).$mount('#app');
+    })();
+</script>
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>员工业绩</title>
+    <th:block th:replace="~{common/commonCss}"></th:block>
+</head>
+<body class="sidebar-fixed header-fixed">
+<div class="page-wrapper">
+    <th:block th:replace="~{user/common/header}"></th:block>
+
+    <div class="main-container">
+        <th:block th:replace="~{user/common/sideBar}"></th:block>
+
+        <div class="content" id="app" v-cloak>
+            <div class="card">
+                <div class="card-header bg-light f-cb" style="line-height: 24px;">
+                    <span>
+                        <span>员工销量统计</span>
+                        <i class="fa fa-circle-notch f-csp" title="点击刷新" @click="getData(1)"></i>
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                            <tr>
+                                <th>账号</th>
+                                <th>今天</th>
+                                <th>昨天</th>
+                                <th>上周</th>
+                                <th>本月</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr v-for="item in data.records">
+                                <td>{{item.account}}</td>
+                                <td>{{item.tc||0}}</td>
+                                <td>{{item.yc||0}}</td>
+                                <td>{{item.lwc||0}}</td>
+                                <td>{{item.tmc||0}}</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                        <div v-if="!data.records.length" class="f-tac f-info">
+                            <span class="f-fs18">暂无数据</span>
+                        </div>
+                    </div>
+                    <div style="padding: 0 5px;" v-if="data.pages > 1">
+                        <ul class="pagination">
+                            <li v-if="data.current>1" class="page-item" @click="getData(reqvo.current-1)"><a
+                                    class="page-link">上一页</a></li>
+                            <li v-for="n in data.pages" class="page-item" :class="{active: n==reqvo.current}"
+                                @click="getData(n)">
+                                <a class="page-link">{{n}}</a>
+                            </li>
+                            <li v-if="data.current<data.pages" class="page-item" @click="getData(reqvo.current+1)"><a
+                                    class="page-link">下一页</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<th:block th:replace="~{common/commonJs}"></th:block>
+<th:block th:replace="~{common/commonJs2}"></th:block>
+<script type="text/javascript">
+    (function () {
+        var app = new Vue({
+            data: {
+                reqvo: {current: 1},
+                data: {records: [], pages: 1}
+            },
+            mounted: function () {
+                this.getData(1);
+            },
+            methods: {
+                getData: function (pageNo) {
+                    this.reqvo.current = pageNo || this.reqvo.current;
+                    CommonUtils.request({
+                        url: 'user/performance',
+                        data: this.reqvo,
+                        success: function (res) {
+                            app.data.records = res.data.content || [];
+                        }
+                    })
+                }
+            }
+        }).$mount('#app');
+    })();
+</script>
+</body>
+</html>

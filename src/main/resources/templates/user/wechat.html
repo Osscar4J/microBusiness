@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>微信设置</title>
+    <th:block th:replace="~{common/commonCss}"></th:block>
+</head>
+<body class="sidebar-fixed header-fixed">
+<div class="page-wrapper">
+    <th:block th:replace="~{user/common/header}"></th:block>
+
+    <div class="main-container">
+        <th:block th:replace="~{user/common/sideBar}"></th:block>
+
+        <div class="content" id="app" v-cloak>
+            <div class="card">
+                <div class="card-header bg-light" style="line-height: 24px;">
+                    <span>微信设置</span>
+                    <div class="f-fr">
+                        <button class="btn btn-sm btn-success" @click="sync()">同步至公众号</button>
+                        <button v-if="data.length < 3" class="btn btn-sm btn-outline-primary" @click="addNew(null)">
+                            新增菜单
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" v-for="item in data">
+                <div class="card-header bg-light" style="line-height: 24px;">
+                    <span>{{item.name}} <i class="icon-note f-csp" title="点击修改" @click="addNew(item)"></i></span>
+                    <span>{{item.sortNo}} <i class="icon-note f-csp" title="点击修改排序"
+                                             @click="updateSort(item)"></i></span>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive" v-if="item.subList">
+                        <table class="table">
+                            <thead>
+                            <tr>
+                                <th>名称</th>
+                                <th>状态</th>
+                                <th>type</th>
+                                <th>Key</th>
+                                <th>链接地址</th>
+                                <th>操作</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr v-for="subItem in item.subList">
+                                <td>{{subItem.name}}</td>
+                                <td>
+                                    <button v-if="subItem.status==1" class="btn btn-sm btn-primary">正常</button>
+                                    <button v-else-if="subItem.status==0" class="btn btn-sm btn-danger">停用</button>
+                                </td>
+                                <td>
+                                    <span v-if="subItem.type=='view'">网页</span>
+                                    <span v-else-if="subItem.type=='click'">点击</span>
+                                    <span v-else-if="subItem.type=='miniprogram'">小程序</span>
+                                </td>
+                                <td>{{subItem.wxKey}}</td>
+                                <td>{{subItem.url}}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-success" @click="updateSort(subItem)">排序</button>
+                                    <button class="btn btn-sm btn-primary" data-toggle="modal"
+                                            data-target="#dataFormDialog" @click="editSubMenu(subItem)">编辑
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" @click="del(subItem)">删除</button>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="f-tac" v-if="!item.subList || item.subList.length < 5">
+                        <button class="btn btn-secondary btn-sm" data-toggle="modal" data-target="#dataFormDialog"
+                                @click="addSubMenu(item)">添加子菜单
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="dataFormDialog" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+                 aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">编辑</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label class="form-control-label require">名称</label>
+                                <input type="text" class="form-control" v-model="entity.name">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-control-label require">类型</label>
+                                <div class="form-control border-0" style="padding-left:0;">
+                                    <button class="btn btn-sm" :class="{'btn-primary':entity.type=='view'}"
+                                            @click="$set(entity,'type','view')">网页
+                                    </button>
+                                    <button class="btn btn-sm" :class="{'btn-primary':entity.type=='click'}"
+                                            @click="$set(entity,'type','click')">点击
+                                    </button>
+                                    <button class="btn btn-sm" :class="{'btn-primary':entity.type=='miniprogram'}"
+                                            @click="$set(entity,'type','miniprogram')">小程序
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-control-label require">状态</label>
+                                <div class="form-control border-0" style="padding-left:0;">
+                                    <button class="btn btn-sm" :class="{'btn-primary':entity.status==1}"
+                                            @click="$set(entity,'status',1)">正常
+                                    </button>
+                                    <button class="btn btn-sm" :class="{'btn-danger':entity.status==0}"
+                                            @click="$set(entity,'status',0)">停用
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="form-group" v-if="entity.type!='view'">
+                                <label class="form-control-label require">Key</label>
+                                <input type="text" class="form-control" v-model="entity.wxKey">
+                            </div>
+                            <div class="form-group" v-if="entity.type=='view'">
+                                <label class="form-control-label">链接地址</label>
+                                <input class="form-control" v-model="entity.url">
+                            </div>
+                            <div class="form-group" v-if="entity.type=='miniprogram'">
+                                <label class="form-control-label">小程序appid</label>
+                                <input class="form-control" v-model="entity.appid">
+                            </div>
+                            <div class="form-group" v-if="entity.type=='miniprogram'">
+                                <label class="form-control-label">小程序的页面路径</label>
+                                <input class="form-control" v-model="entity.pagepath">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-control-label">菜单说明</label>
+                                <textarea class="form-control" v-model="entity.info" maxlength="500"
+                                          placeholder="500字以内" rows="6"></textarea>
+                            </div>
+                            <div class="form-group f-tac">
+                                <button class="btn btn-sm btn-primary w-25" @click="save()">保存</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<th:block th:replace="~{common/commonJs}"></th:block>
+<th:block th:replace="~{common/commonJs2}"></th:block>
+<script type="text/javascript">
+    (function () {
+        var baseApi = 'wechat';
+        var app = new Vue({
+            data: {
+                entity: {},
+                services: [],
+                data: []
+            },
+            mounted: function () {
+                this.getData();
+            },
+            methods: {
+                updateSort: function (entity) {
+                    var sort = entity.sortNo;
+                    if (sort = prompt("请输入排序号码，数字越大越靠前", entity.sortNo)) {
+                        if (/[\D\.]/.test(sort)) {
+                            alert('请输入整数');
+                            return false;
+                        }
+                        this.entity = {id: entity.id, sortNo: sort};
+                        this.save();
+                    }
+                },
+                sync: function () {
+                    CommonUtils.request({
+                        url: baseApi + '/menu/sync',
+                        config: {method: 'POST'},
+                        always: function (res) {
+                            CommonUtils.toast(res.data.msg);
+                        }
+                    })
+                },
+                editSubMenu: function (entity) {
+                    this.entity = $.extend({}, entity);
+                    !this.services.length && this.getServices();
+                },
+                addSubMenu: function (entity) {
+                    this.entity = {parentId: entity.id, type: 'view', status: 1, menuLv: 2};
+                    !this.services.length && this.getServices();
+                },
+                addNew: function (entity) {
+                    this.entity = $.extend({}, entity || {});
+                    var name = this.entity.name;
+                    if (name = prompt("请输入菜单名称（8个字以内）", this.entity.name || '')) {
+                        if (name.length > 8) {
+                            alert('菜单名称请限制在8个字以内');
+                            return false;
+                        }
+                        this.entity.name = name;
+                        this.save();
+                    }
+                },
+                del: function (item) {
+                    if (confirm('确定要删除吗？')) {
+                        CommonUtils.request({
+                            url: baseApi + '/menu/' + item.id,
+                            config: {method: 'DELETE'},
+                            success: function (res) {
+                                app.getData();
+                            },
+                            always: function (res) {
+                                CommonUtils.toast(res.data.msg);
+                            }
+                        })
+                    }
+                },
+                save: function () {
+                    CommonUtils.request({
+                        url: baseApi + '/menu',
+                        config: {method: 'POST'},
+                        data: this.entity,
+                        success: function (res) {
+                            app.getData();
+                            $('#dataFormDialog').modal('hide');
+                        },
+                        always: function (res) {
+                            CommonUtils.toast(res.data.msg);
+                        }
+                    })
+                },
+                getData: function () {
+                    CommonUtils.request({
+                        url: baseApi + '/menus',
+                        success: function (res) {
+                            app.data = res.data.content || [];
+                        }
+                    })
+                }
+            }
+        }).$mount('#app');
+    })();
+</script>
+</body>
+</html>

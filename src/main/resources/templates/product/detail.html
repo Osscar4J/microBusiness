@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title th:text="${product!=null?product.name:'产品已下架'}"></title>
+    <th:block th:replace="~{common/commonCss}"></th:block>
+    <link href="https://cdn.bootcss.com/swipejs/2.2.13/style.min.css" rel="stylesheet">
+    <link href="/static/css/common/swiper.min.css" rel="stylesheet">
+    <style type="text/css">
+        .info-bar {
+            line-height: 7vw;
+            background: rgb(255, 40, 57);
+            color: #fff;
+            padding: 5vw 3vw;
+            font-weight: bold;
+            margin-top: 0vw;
+            margin-bottom: 0vw;
+            border-top: 1px solid #ddd;
+            border-bottom: 1px solid #ddd;
+        }
+
+        img {
+            max-width: 100%;
+        }
+
+        .choose-item .title {
+            color: #000;
+            font-size: 3.5vw;
+            font-weight: bold;
+            margin-top: 3vw;
+        }
+
+        .sub-item > div {
+            margin-top: 2vw;
+            display: inline-block;
+            background: #f2f2f2;
+            color: #333;
+            font-size: 3.2vw;
+            line-height: 9vw;
+            padding: 0vw 5vw;
+            border-radius: 0.5vw;
+            -right: 2vw;
+            box-sizing: border-box;
+        }
+
+        .choose-item .sub-item > div {
+            margin: 7.5px 7.5px 0 0;
+        }
+
+        .choose-item .sub-item > div.active {
+            background: #fcedeb;
+            color: #f44b4b;
+            box-shadow: 0px 0px 0px 1px #f2270d inset;
+            box-sizing: border-box;
+        }
+
+        .choose-item .sub-item > div.disabled {
+            background: #fafafa;
+            color: #ccc;
+        }
+
+        .chooseNum {
+            height: 10vw;
+            line-height: 10vw;
+            margin-top: 2vw;
+        }
+
+        .chooseNum .numBtn span {
+            display: inline-block;
+            width: 10vw;
+            height: 8vw;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .chooseNum .title, .totalPrice .title {
+            color: #000;
+            font-size: 3.5vw;
+            font-weight: bold;
+        }
+
+        .chooseNum .numBtn {
+            float: right;
+            line-height: 8vw;
+        }
+
+        .chooseNum .numBtn .nlbtn, .chooseNum .numBtn .nrbtn {
+            font-size: 5vw;
+        }
+
+        .chooseNum .numBtn span.disabled {
+            color: #aaa;
+        }
+
+        .chooseNum .numBtn .showNum {
+            background: #f2f2f2;
+            width: 12vw;
+            color: #000;
+        }
+
+        .bt-nav {
+            display: flex;
+            width: 100vw;
+            height: 12vw;
+            background: #fafafa;
+            justify-content: space-around;
+        }
+
+        .bt-nav .btn {
+            cursor: pointer;
+            width: 33.33%;
+            line-height: 12vw;
+            text-align: center;
+            padding: 0;
+            vertical-align: baseline;
+            color: #ffffff;
+        }
+
+        .bt-nav .btn.act {
+            background: red;
+        }
+
+        .bt-nav .btn.order {
+            background-color: red;
+        }
+
+        .bt-nav.fixed {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            z-index: 9;
+        }
+
+        .qa .item {
+            line-height: 7vw;
+        }
+
+        .qa .item .title {
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .qa .item .desc {
+            text-indent: 1em;
+        }
+
+        #selling {
+            background: orange;
+            display: none;
+            color: #fff;
+            top: 10px;
+            left: 10px;
+            z-index: 9;
+            padding: 3px 5px;
+            border-radius: 5px;
+            opacity: .9;
+        }
+    </style>
+</head>
+<body th:if="${product!=null}">
+<div id="selling" class="f-pf"></div>
+<div class="swiper-container">
+    <div class="swiper-wrapper">
+        <div class="swiper-slide f-tac" th:each="item: ${product.getBanners()}">
+            <img th:src="${item.fileUrl}">
+        </div>
+    </div>
+    <div class="swiper-pagination"></div>
+</div>
+<div class="info-bar f-cb">
+    <div class="f-fl">
+        ￥
+        <span th:text="${product.priceF}" style="font-size: 7vw;"></span>
+        <s th:if="${product.price!=product.originPrice}"
+           style="color: rgb(255, 164, 144);margin-left: 3vw;font-size: 3.5vw;">
+            原价￥<span th:text="${product.originPriceF}"></span>
+        </s>
+    </div>
+    <div class="f-fr f-pr" style="top:4px;">
+        <span th:text="${product.sellCount}"></span>人已抢购
+        剩余<span th:text="${product.remain}"></span>件
+    </div>
+</div>
+<div class="f-tac" style="background: rgb(255, 255, 255); color: rgb(70, 70, 73);padding: 4vw 2vw;"><b
+        style="font-size: 5vw; padding-left: 1vw;" th:text="${product.name}"></b></div>
+<div class="mgt10" th:utext="${product.content}"></div>
+<div id="app" v-cloak>
+    <div class="card" style="margin-bottom:0;">
+        <div class="card-body choose-item" style="padding-top:0;">
+            <div v-for="item in properties" id="properties">
+                <div class="title">{{item.name}}</div>
+                <div class="sub-item">
+                    <div :class="{active:propHasSelected(sItem),disabled:sItem.remain==0}"
+                         @click="sItem.remain>0&&selectProp(sItem)" v-for="sItem in item.items">{{sItem.name}}
+                    </div>
+                </div>
+            </div>
+            <div class="totalPrice f-oh f-cb">
+                <div class="title f-fl">
+                    <div class="chooseNum">
+                        <span class="title">数量</span>
+                        <div class="numBtn">
+                            <span class="nlbtn" :class="{disabled:form.count<=1}" @click="form.count>1 && form.count--"
+                                  style="line-height: 9vw;">-</span>
+                            <span class="showNum">{{form.count}}</span>
+                            <span class="nrbtn" style="line-height: 9vw;" @click="form.count++">+</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="tprice f-fr" style="color: rgb(255, 40, 57);margin-top: 5vw;">
+                    <b class="chooseNum" style="font-size: 4vw;">总价：￥{{form.count*price/100}}</b>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card-body" id="contact">联系人信息</div>
+    <div class="card" style="margin-bottom:0;">
+        <div class="card-body">
+            <div class="form-group">
+                <label class="form-control-label1">收件人</label>
+                <input v-model="form.receiver" id="form-control-label1" class="form-control" placeholder="收件人"
+                       maxlength="128">
+            </div>
+            <div class="form-group">
+                <label class="form-control-label2">手机号码</label>
+                <input v-model="form.phone" id="form-control-label2" class="form-control" placeholder="手机号码"
+                       maxlength="11">
+            </div>
+        </div>
+    </div>
+    <div class="card-body">地址</div>
+    <div class="card">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-4" style="padding-right:5px;">
+                    <div class="form-group">
+                        <select class="form-control" v-model="form.pId"
+                                @change="getCities(form.pId,function(data){cities=data})">
+                            <option :value="null">选择省</option>
+                            <option v-for="item in provinces" :value="item.id">{{item.name}}</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-4" style="padding: 0 5px 0 5px;">
+                    <div class="form-group">
+                        <select class="form-control" v-model="form.cId"
+                                @change="getCities(form.cId,function(data){districts=data})">
+                            <option :value="null">选择市</option>
+                            <option v-for="item in cities" :value="item.id">{{item.name}}</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-4" style="padding-left: 5px;">
+                    <div class="form-group">
+                        <select class="form-control" v-model="form.sId">
+                            <option :value="null">选择区/县</option>
+                            <option v-for="item in districts" :value="item.id">{{item.name}}</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>详细地址</label>
+                <input v-model="form.addr" class="form-control" placeholder="请填写详细地址,街道，楼号，单元号" maxlength="140">
+            </div>
+            <div class="form-group">
+                <label>备注</label>
+                <input v-model="form.mark" class="form-control" placeholder="有什么要求尽管吩咐" maxlength="140">
+            </div>
+        </div>
+    </div>
+    <!--<div @click="toOrder" class="f-tac" style="margin-bottom: 1.5rem;line-height: 12vw;height: 12vw;font-weight: 500;border-color: transparent;background-color: #ea5a49;color: #fff;">提交订单</div>-->
+    <div v-if="fixedBtBar" style="height: 12vw;"></div>
+    <div class="bt-nav f-tran" :class="{fixed:fixedBtBar}">
+        <div class="btn">
+            <div @click="showQa=true" style="color:#222;">常见问题</div>
+        </div>
+        <div class="btn">
+            <div @click="beforeSell=true" style="color:#222;">售前客服</div>
+            <!--<a th:href="${'tel:' + kfPhone}" style="text-decoration: none; display: block; color: #222; width: 100%;">售前客服</a>-->
+        </div>
+        <div class="btn" :class="{act:!fixedBtBar,order:fixedBtBar}">
+            <div @click="toOrder">立即下单</div>
+            <!--<div v-else @click="showQa=true">常见问题</div>-->
+        </div>
+    </div>
+
+    <div v-if="showQa" class="f-pf animated slideInLeft faster" @click="showQa=false"
+         style="z-index:9;width:100%;height:100%;left:0;top:0;background:#000;opacity: .6;"></div>
+    <div v-if="showQa" class="f-pf animated fadeInLeft faster w-75" style="top:50px;left:12.5%;z-index: 9;">
+        <div class="card">
+            <div class="card-header bg-light f-tac font-weight-bold f-fs16">
+                常见问题
+                <div @click="showQa=false" class="f-pa f-csp f-fs30" style="right:7px;top:-3px;">×</div>
+            </div>
+            <div class="card-body qa">
+                <div class="item">
+                    <div class="title">1、活动是真实的吗？</div>
+                    <div class="desc">活动是真实有效、保证发货的，由于是限时活动，如遇库存不足会随时停止。</div>
+                </div>
+                <div class="item">
+                    <div class="title">2、如何付款以及是否安全？</div>
+                    <div class="desc">我们采用微信支付的方式，通过微信的认证，并由微信提供保障，安全有保障。</div>
+                </div>
+                <div class="item">
+                    <div class="title">3、成功下单后什么时候发货？</div>
+                    <div class="desc">下单成功24小时内发货，并会通过短信告知您快递单号，您可随时关注物流动态。</div>
+                </div>
+                <div class="item">
+                    <div class="title">4、售后保障</div>
+                    <div class="desc">我们提供7*8小时的在线客服服务，您下单成功后，系统会给您发货订单编号，在线客服可根据订单编号为您了解订单状态，并提供相应的售后服务。</div>
+                    <div class="desc">由于活动原因，售前微信客服可能无法随时回复您，如您已经购买，您可以联系售后客服为您提供服务！</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div v-if="beforeSell" class="f-pf animated slideInRight faster" @click="beforeSell=false"
+         style="z-index:9;width:100%;height:100%;left:0;top:0;background:#000;opacity: .6;"></div>
+    <div v-if="beforeSell" class="f-pf animated slideInRight faster w-75" style="top:50px;left:12.5%;z-index: 9;">
+        <div class="card">
+            <div class="card-header bg-light f-tac font-weight-bold f-fs16">
+                售前客服
+                <div @click="showQa=false" class="f-pa f-csp f-fs30" style="right:7px;top:-3px;">×</div>
+            </div>
+            <div class="card-body qa">
+                <div class="item">
+                    <div class="desc" style="text-indent: 0;">客服电话：<a class="f-success"
+                                                                      style="text-decoration: underline;"
+                                                                      th:href="${'tel:' + kfPhone}">点击拨打</a></div>
+                </div>
+                <div class="item">
+                    <div class="desc" style="text-indent: 0;">客服接听时间为工作日 09:00-18:00，此电话只处理当前产品的售前售后问题。</div>
+                    <div class="desc f-danger" style="text-indent: 0;">注：此电话无法接受短信，如需服务请电话咨询，勿发短信！</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div style="z-index:999;padding:3px 5px;-webkit-border-radius:3px;-moz-border-radius: 3px;border-radius: 3px;top:10px;right:10px;background: #000;color:#fff;opacity:.7;"
+     class="f-pf"><a style="color:#fff;" href="/report">投诉</a></div>
+<script src="https://yangyangdeyi.oss-cn-shenzhen.aliyuncs.com/statis/js/2019823153660.js"></script>
+<th:block th:replace="~{common/commonJs2}"></th:block>
+<script src="https://yangyangdeyi.oss-cn-shenzhen.aliyuncs.com/statis/js/2019823153348650.js"></script>
+<script src="/static/js/common.min.js"></script>
+<script th:inline="javascript">
+    (function () {
+        var $body = null;
+        var $selling = null;
+        new Swiper('.swiper-container', {
+            loop: true,
+            autoplay: {delay: 3000, disableOnInteraction: false},
+            pagination: {el: '.swiper-pagination', clickable: true}
+        });
+        var app = new Vue({
+            data: {
+                price: [[${product.price}]],
+                fixedBtBar: true, showQa: false, beforeSell: false,
+                choosedPropsMap: {},
+                properties: [[${product.properties}]],
+                provinces: [[${provinces==null?null:provinces}]],
+                cities: [],
+                districts: [],
+                form: {prodId: [[${product.id}]], pId: null, cId: null, sId: null, count: 1}
+            },
+            mounted: function () {
+                $(document).scroll(function () {
+                    if ($(document).height() < $(document).scrollTop() + $(window).height() + 40) {
+                        app.fixedBtBar && (app.fixedBtBar = false);
+                    } else {
+                        !app.fixedBtBar && (app.fixedBtBar = true);
+                    }
+                });
+                $selling = $('#selling');
+                this.getSelling();
+            },
+            methods: {
+                getSelling: function () {
+                    CommonUtils.request({
+                        url: 'order/latest', success: function (res) {
+                            res.data.content && app.stoggle(res.data.content);
+                        }
+                    });
+                },
+                stoggle: function (list) {
+                    var t = list.pop();
+                    !!t ? setTimeout(function () {
+                        $selling.fadeOut().fadeIn().text(t);
+                        setTimeout(function () {
+                            $selling.fadeOut();
+                            app.stoggle(list);
+                        }, 2000);
+                    }, 500 + Math.random() * 3000) : this.getSelling();
+                },
+                getCities: function (pId, callback) {
+                    CommonUtils.request({
+                        url: 'area', data: {pId: pId}, success: function (res) {
+                            typeof callback == 'function' && (callback(res.data.content || []));
+                        }, failure: function (res) {
+                            CommonUtils.toast(res.data.msg);
+                        }
+                    });
+                },
+                selectProp: function (item) {
+                    !this.propHasSelected(item) && (function () {
+                        app.$set(app.choosedPropsMap, item.propertyId, item.id);
+                    })();
+                },
+                propHasSelected: function (item) {
+                    if (this.choosedPropsMap[item.propertyId] == item.id)
+                        return true;
+                    return false;
+                },
+                toOrder: function () {
+                    !$body && ($body = (window.opera) ? (document.compatMode == "CSS1Compat" ? $('html') : $('body')) : $('html,body'));
+                    var count = 0;
+                    for (var k in this.choosedPropsMap) {
+                        count++;
+                    }
+                    if (count < this.properties.length) {
+                        $body.animate({scrollTop: $('#properties').offset().top}, 300);
+                        CommonUtils.toast('请选择产品属性')
+                        return false;
+                    }
+                    var toCont = false;
+                    if (!toCont && (!this.form.receiver || !this.form.phone)) {
+                        toCont = true;
+                        CommonUtils.toast('请输入收件人信息');
+                    }
+                    if (!toCont && (!this.form.pId || !this.form.cId || !this.form.sId)) {
+                        toCont = true;
+                        CommonUtils.toast('请选择省市区');
+                    }
+                    if (!toCont && !this.form.addr) {
+                        toCont = true;
+                        CommonUtils.toast('请输入详细地址');
+                    }
+                    if (toCont) {
+                        $body.animate({scrollTop: $('#contact').offset().top}, 300);
+                        return false;
+                    }
+                    this.form.properties = [];
+                    for (var k in this.choosedPropsMap) {
+                        this.form.properties.push({id: this.choosedPropsMap[k]});
+                    }
+                    CommonUtils.request({
+                        url: 'order/submit',
+                        data: this.form,
+                        config: {method: 'POST'},
+                        success: function (res) {
+                            window.location.href = res.data.content;
+                        },
+                        failure: function (res) {
+                            CommonUtils.toast(res.data.msg);
+                        }
+                    });
+                }
+            }
+        }).$mount('#app');
+    })();
+</script>
+</body>
+<body th:if="${product==null}">
+<div class="f-tac mgt60 f-fs20 animated fadeInUp">产品已下架</div>
+</body>
+</html>

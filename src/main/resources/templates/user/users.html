@@ -1,0 +1,658 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title th:if="${session.user_session.roleId==1}">代理管理</title>
+    <title th:if="${session.user_session.roleId==2}">员工管理</title>
+    <th:block th:replace="~{common/commonCss}"></th:block>
+    <link rel="stylesheet" href="/static/css/common/bootstrap-datetimepicker.min.css">
+    <style type="text/css">.fa:hover {
+        color: #0c87eb;
+    }</style>
+</head>
+<body class="sidebar-fixed header-fixed">
+<div class="page-wrapper">
+    <th:block th:replace="~{user/common/header}"></th:block>
+
+    <div class="main-container">
+        <th:block th:replace="~{user/common/sideBar}"></th:block>
+
+        <div class="content" id="app" v-cloak>
+            <div class="card">
+                <div class="card-header bg-light f-cb" style="line-height: 24px;">
+                    <span>
+                        <span th:if="${session.user_session.roleId==1}">代理列表</span>
+                        <span th:if="${session.user_session.roleId==2}">员工列表</span>
+                        <i class="fa fa-circle-notch f-csp" title="点击刷新" @click="getData(1)"></i>
+                    </span>
+                    <span><i class="fa fa-search f-csp" title="显示搜索" @click="showSearch = !showSearch"></i></span>
+                    <div class="f-fr" th:if="${session.user_session.roleId==1}">
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-toggle="modal"
+                                data-target="#addProxyDialog" @click="initEntity()">添加代理
+                        </button>
+                    </div>
+                    <div class="f-fr" th:if="${session.user_session.roleId==1}" style="margin-right:5px;">
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-toggle="modal"
+                                data-target="#statisticsDialog" @click="showOrderStatistics()">销售排行
+                        </button>
+                    </div>
+                    <div class="f-fr" th:if="${session.user_session.roleId==2}">
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-toggle="modal"
+                                data-target="#registerQRCode" @click="showProxyRegisterCode()">员工注册入口
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <div class="row" v-show="showSearch">
+                        <div class="col-md-12">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="input-group input-group-sm mb-3">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">手机号</span>
+                                                </div>
+                                                <input type="text" class="form-control" placeholder="输入手机号"
+                                                       v-model="reqvo.phone">
+                                            </div>
+                                            <div class="input-group input-group-sm mb-3">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">邮&nbsp;&nbsp;&nbsp;箱</span>
+                                                </div>
+                                                <input type="text" class="form-control" placeholder="输入邮箱"
+                                                       v-model="reqvo.email">
+                                            </div>
+                                            <div class="input-group input-group-sm mb-3">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">昵&nbsp;&nbsp;&nbsp;称</span>
+                                                </div>
+                                                <input type="text" class="form-control" placeholder="输入昵称"
+                                                       v-model="reqvo.nickname">
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-4">
+                                            <div class="input-group input-group-sm mb-3">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">登录天数</span>
+                                                </div>
+                                                <input type="number" class="form-control" placeholder="大于指定天数"
+                                                       v-model="reqvo.loginDays">
+                                            </div>
+                                            <div class="input-group input-group-sm mb-3">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">状&nbsp;&nbsp;&nbsp;态</span>
+                                                </div>
+                                                <select v-model="reqvo.status" class="form-control"
+                                                        @change="getData(1)">
+                                                    <option :value="null">全部</option>
+                                                    <option value="1">正常</option>
+                                                    <option value="2">冻结</option>
+                                                    <option value="3">异常</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <button @click="getData(1)" type="button" class="btn btn-primary btn-sm"><i
+                                                    class="fa fa-search"></i> 搜索
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                            <tr>
+                                <th>昵称</th>
+                                <th>账号</th>
+                                <th th:if="${session.user_session.roleId==1}">微商</th>
+                                <th>状态</th>
+                                <th>手机号</th>
+                                <th>邮箱</th>
+                                <th>连续登录</th>
+                                <th>最近登录</th>
+                                <th>操作</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr v-for="item in data.records">
+                                <td>
+                                    <span>{{item.nickname}}</span>
+                                    <i v-if="item.roleId==2" @click="showRegQRCode(item.id)"
+                                       class="fa fa-qrcode f-csp f-primary" data-toggle="modal"
+                                       data-target="#registerQRCode" title="员工注册入口"></i>
+                                </td>
+                                <td>{{item.account}}</td>
+                                <td th:if="${session.user_session.roleId==1}">{{item.proxyCount}}</td>
+                                <td class="text-nowrap">
+                                    <button v-if="item.status==1" type="button" class="btn btn-sm btn-outline-success">
+                                        正常
+                                    </button>
+                                    <button v-else-if="item.status==2" type="button"
+                                            class="btn btn-sm btn-outline-danger">冻结
+                                    </button>
+                                    <button v-else-if="item.status==3" type="button"
+                                            class="btn btn-sm btn-outline-warning">异常
+                                    </button>
+                                </td>
+                                <td>{{item.phone}}</td>
+                                <td>{{item.email}}</td>
+                                <td>{{item.loginDays}}天</td>
+                                <td>
+                                    <span v-if="item.lastLoginTime">{{new Date(item.lastLoginTime).Format('yyyy/MM/dd hh:mm')}}</span>
+                                </td>
+                                <td>
+                                    <button th:if="${session.user_session.roleId==1}" v-if="item.roleId!=1"
+                                            type="button" class="btn btn-sm btn-outline-success"
+                                            @click="getEmployees(1,item.id)" data-toggle="modal"
+                                            data-target="#employeeDialog">员工业绩
+                                    </button>
+                                    <button th:if="${session.user_session.roleId==1}" v-if="item.roleId!=1"
+                                            type="button" class="btn btn-sm btn-outline-info"
+                                            @click="showMicroBusinessUser(item)" data-toggle="modal"
+                                            data-target="#usersDialog">微商
+                                    </button>
+                                    <button v-if="item.roleId!=1" type="button" class="btn btn-sm btn-primary"
+                                            @click="edit(item)">编辑
+                                    </button>
+                                    <button v-if="item.status!=2" type="button" class="btn btn-sm btn-warning"
+                                            @click="updateStatus(item.id, 2)">冻结
+                                    </button>
+                                    <button v-if="item.status==2" type="button" class="btn btn-sm btn-success"
+                                            @click="updateStatus(item.id, 1)">恢复
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-danger" @click="removeById(item.id)">
+                                        删除
+                                    </button>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                        <div v-if="!data.records.length" class="f-tac f-info">
+                            <span class="f-fs18">暂无数据</span>
+                        </div>
+                        <div v-if="data.pages>1" style="padding: 0 5px;height: 40px;line-height: 40px;">
+                            <div class="f-fl" style="width:150px;">
+                                <div class="f-fl">每页数量：</div>
+                                <div class="f-fl" style="width: 75px;margin-top:2px;">
+                                    <select v-model="reqvo.size" class="form-control" @change="getData(1)">
+                                        <option :value="10">10</option>
+                                        <option :value="20">20</option>
+                                        <option :value="50">50</option>
+                                        <option :value="100">100</option>
+                                        <option :value="200">200</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div id="pagination"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="registerQRCode" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+                 aria-hidden="true">
+                <div class="modal-dialog modal-sm" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">员工注册入口</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+
+                        <div class="modal-body f-tac">
+                            <img v-if="!!imgUrl" :src="imgUrl">
+                            <span v-else>加载中...</span>
+                            <div class="mgt10 f-info">扫码注册</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="addProxyDialog" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+                 aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">编辑</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label class="form-control-label">昵称</label>
+                                <input type="text" class="form-control" v-model="entity.nickname" maxlength="12"
+                                       placeholder="输入昵称">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-control-label require">账号</label>
+                                <input type="text" class="form-control" v-model="entity.account" maxlength="16"
+                                       placeholder="输入账号" :readonly="!!entity.id">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-control-label require">手机号</label>
+                                <input type="text" class="form-control" v-model="entity.phone" maxlength="11"
+                                       placeholder="输入手机号">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-control-label require">设置密码</label>
+                                <input type="text" class="form-control" v-model="entity.passwd" placeholder="设置密码"
+                                       maxlength="16">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-control-label require">邮箱</label>
+                                <input type="email" class="form-control" v-model="entity.email" maxlength="64"
+                                       placeholder="输入邮箱">
+                            </div>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary" @click="save()">提交</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="usersDialog" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+                 aria-hidden="true">
+                <div class="modal-dialog modal-lg" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">{{entity.nickname || entity.account}}的微商列表</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+
+                        <div class="modal-body f-tac">
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                    <tr>
+                                        <th>昵称</th>
+                                        <th>账号</th>
+                                        <th>状态</th>
+                                        <th>手机号</th>
+                                        <th>连续登录</th>
+                                        <th>最近登录</th>
+                                        <th>注册时间</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr v-for="item in usersData.records">
+                                        <td><span>{{item.nickname}}</span></td>
+                                        <td>{{item.account}}</td>
+                                        <td class="text-nowrap">
+                                            <button v-if="item.status==1" type="button"
+                                                    class="btn btn-sm btn-outline-success">正常
+                                            </button>
+                                            <button v-else-if="item.status==2" type="button"
+                                                    class="btn btn-sm btn-outline-danger">冻结
+                                            </button>
+                                            <button v-else-if="item.status==3" type="button"
+                                                    class="btn btn-sm btn-outline-warning">异常
+                                            </button>
+                                        </td>
+                                        <td>{{item.phone}}</td>
+                                        <td>{{item.loginDays}}天</td>
+                                        <td>
+                                            <span v-if="item.lastLoginTime">{{new Date(item.lastLoginTime).Format('yyyy/MM/dd hh:mm')}}</span>
+                                        </td>
+                                        <td>
+                                            <span v-if="item.createTime">{{new Date(item.createTime).Format('yyyy/MM/dd hh:mm')}}</span>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div v-if="!usersData.records.length" class="f-tac f-info">
+                                <span class="f-fs18">暂无数据</span>
+                            </div>
+                            <div style="padding: 0 5px;" v-if="usersData.pages > 1">
+                                <ul class="pagination">
+                                    <li v-if="usersData.current>1" class="page-item"
+                                        @click="getUsers(usersReqvo.current-1)"><a class="page-link">上一页</a></li>
+                                    <li v-for="n in usersData.pages" class="page-item"
+                                        :class="{active: n==usersReqvo.current}" @click="getUsers(n)">
+                                        <a class="page-link">{{n}}</a>
+                                    </li>
+                                    <li v-if="usersData.current<usersData.pages" class="page-item"
+                                        @click="getUsers(usersReqvo.current+1)"><a class="page-link">下一页</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="statisticsDialog" tabindex="-1" role="dialog"
+                 aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">销售排行</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+
+                        <div class="modal-body f-tac">
+                            <div class="f-cb">
+                                <div class="f-fl" style="margin-right: 10px;">
+                                    <div class="input-group input-group-sm mb-3" style="margin-bottom:0 !important;">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">显示数量</span>
+                                        </div>
+                                        <select v-model="orderStatReqVO.end" @change="getOrderStatistics()">
+                                            <option :value="5">5</option>
+                                            <option :value="10">10</option>
+                                            <option :value="20">20</option>
+                                            <option :value="50">50</option>
+                                            <option :value="100">100</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="f-fl">
+                                    <div class="input-group input-group-sm mb-3" style="margin-bottom:0 !important;">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">统计周期</span>
+                                        </div>
+                                        <input type="text" class="form-control f-csp" placeholder="开始时间"
+                                               data-date-format="yyyy-mm-dd" id="startTime" readonly>
+                                        <span style="padding:0 5px;">-</span>
+                                        <input type="text" class="form-control f-csp" placeholder="结束时间"
+                                               data-date-format="yyyy-mm-dd" id="endTime" readonly>
+                                        <button class="btn btn-sm btn-primary" @click="getOrderStatistics()">查询</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="f-info f-fs12 mgt5 f-tal">注：默认查询本月的统计结果</div>
+                            <div class="table-responsive mgt5">
+                                <table class="table">
+                                    <thead>
+                                    <tr>
+                                        <th>名次</th>
+                                        <th>昵称</th>
+                                        <th>账号</th>
+                                        <th>销售额</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr v-for="item,index in statisticsData">
+                                        <td>
+                                            <img v-if="index==0" :src="'/static/imgs/j11.png'" width="20" title="冠军">
+                                            <img v-else-if="index==1" :src="'/static/imgs/j22.png'" width="20"
+                                                 title="亚军">
+                                            <img v-else-if="index==2" :src="'/static/imgs/j33.png'" width="20"
+                                                 title="季军">
+                                            <span v-else>{{index+1}}</span>
+                                        </td>
+                                        <td><span>{{item.nickname}}</span></td>
+                                        <td>{{item.account}}</td>
+                                        <td class="text-nowrap">
+                                            <span v-if="!!item.amount">￥{{item.amount/100}}</span>
+                                            <span v-else>0</span>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div v-if="!statisticsData.length" class="f-tac f-info">
+                                <span class="f-fs18">暂无数据</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal fade" id="employeeDialog" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+                 aria-hidden="true">
+                <div class="modal-dialog modal-lg" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">员工业绩</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body f-tac">
+                            <div class="table-responsive mgt5">
+                                <table class="table">
+                                    <thead>
+                                    <tr>
+                                        <th>账号</th>
+                                        <th>今天</th>
+                                        <th>昨天</th>
+                                        <th>上周</th>
+                                        <th>本月</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr v-for="item in performance.records">
+                                        <td>
+                                            {{item.nickname}}
+                                            <span class="f-fs12 f-info"> {{item.account}}</span>
+                                        </td>
+                                        <td>{{item.tc||0}}</td>
+                                        <td>{{item.yc||0}}</td>
+                                        <td>{{item.lwc||0}}</td>
+                                        <td>{{item.tmc||0}}</td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div v-if="!performance.records.length" class="f-tac f-info">
+                                <span class="f-fs18">暂无数据</span>
+                            </div>
+                            <div style="padding: 0 5px;" v-if="performance.pages > 1">
+                                <ul class="pagination">
+                                    <li v-if="performance.current>1" class="page-item"
+                                        @click="getEmployees(employeeReqVO.current-1)"><a class="page-link">上一页</a></li>
+                                    <li v-for="n in performance.pages" class="page-item"
+                                        :class="{active: n==employeeReqVO.current}" @click="getEmployees(n)">
+                                        <a class="page-link">{{n}}</a>
+                                    </li>
+                                    <li v-if="performance.current<data.pages" class="page-item"
+                                        @click="getEmployees(employeeReqVO.current+1)"><a class="page-link">下一页</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <input type="hidden" ref="userId" th:value="${session.user_session.id}">
+        </div>
+    </div>
+</div>
+<th:block th:replace="~{common/commonJs}"></th:block>
+<th:block th:replace="~{common/commonJs2}"></th:block>
+<script src="https://yangyangdeyi.oss-cn-shenzhen.aliyuncs.com/static/js/datetime/2019831103148477.js"></script>
+<script type="text/javascript">
+    ;(function ($) {
+        $.fn.datetimepicker.dates['zh-CN'] = {
+            days: ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日"],
+            daysShort: ["周日", "周一", "周二", "周三", "周四", "周五", "周六", "周日"],
+            daysMin: ["日", "一", "二", "三", "四", "五", "六", "日"],
+            months: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"],
+            monthsShort: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"],
+            today: "今天", suffix: [], meridiem: ["上午", "下午"]
+        };
+    }(jQuery));
+    (function () {
+        var app = new Vue({
+            data: {
+                data: {records: [], pages: 1},
+                reqvo: {current: 1, status: null, size: 10},
+                imgUrl: null,
+                entity: {},
+                showSearch: false,
+                usersData: {records: [], pages: 1},
+                performance: {records: [], pages: 1},
+                employeeReqVO: {id: null, current: 1},
+                usersReqvo: {current: 1, recommendId: null},
+                statisticsData: [],
+                orderStatReqVO: {end: 10}
+            },
+            mounted: function () {
+                this.getData();
+                this.initDatePicker();
+            },
+            methods: {
+                getEmployees: function (pageNo, id) {
+                    this.employeeReqVO.current = pageNo || this.employeeReqVO.current;
+                    this.employeeReqVO.id = id || this.employeeReqVO.id;
+                    CommonUtils.request({
+                        url: 'user/performance',
+                        data: this.employeeReqVO,
+                        success: function (res) {
+                            app.performance.records = res.data.content || [];
+                        }
+                    })
+                },
+                initDatePicker: function () {
+                    var config = {
+                        language: 'zh-CN',
+                        weekStart: 1,
+                        todayBtn: 1,
+                        autoclose: 1,
+                        todayHighlight: 1,
+                        startView: 2,
+                        minView: 2,
+                        forceParse: true
+                    };
+                    $('#startTime').datetimepicker(config).on('changeDate', function (e) {
+                        e.date && (app.orderStatReqVO.st = e.date.Format('yyyy-MM-dd 00:00:00'));
+                    });
+                    $('#endTime').datetimepicker(config).on('changeDate', function (e) {
+                        e.date && (app.orderStatReqVO.et = e.date.Format('yyyy-MM-dd 59:59:59'));
+                    });
+                },
+                showOrderStatistics: function () {
+                    var now = new Date();
+                    now.setDate(1);
+                    this.orderStatReqVO.st = now.Format('yyyy-MM-dd 00:00:00');
+                    this.orderStatReqVO.et = new Date().Format('yyyy-MM-dd 23:59:59');
+                    this.getOrderStatistics();
+                },
+                getOrderStatistics: function () {
+                    CommonUtils.request({
+                        url: 'user/orderStatistics',
+                        data: this.orderStatReqVO,
+                        success: function (res) {
+                            app.statisticsData = res.data.content || [];
+                        }
+                    });
+                },
+                showProxyRegisterCode: function () {
+                    this.showRegQRCode(this.$refs.userId.value);
+                },
+                showMicroBusinessUser: function (user) {
+                    this.entity = user;
+                    this.usersReqvo.recommendId = user.id;
+                    this.getUsers(1);
+                },
+                getUsers: function (pageNo) {
+                    this.usersReqvo.current = pageNo || this.usersReqvo.current;
+                    CommonUtils.request({
+                        url: 'user',
+                        data: this.usersReqvo,
+                        success: function (res) {
+                            app.usersData = res.data.content;
+                            app.usersData.records = app.usersData.records || [];
+                        }
+                    })
+                },
+                initEntity: function () {
+                    this.entity = {
+                        roleId: 2,
+                        nickname: null,
+                        account: null,
+                        passwd: null,
+                        email: null
+                    };
+                },
+                edit: function (entity) {
+                    this.entity = $.extend({}, entity);
+                    $("#addProxyDialog").modal('show');
+                },
+                save: function () {
+                    CommonUtils.request({
+                        url: 'user',
+                        data: this.entity,
+                        config: {method: 'POST'},
+                        success: function (res) {
+                            CommonUtils.toast(res.data.msg);
+                            app.initEntity();
+                            app.getData(1);
+                            $("#addProxyDialog").modal('hide');
+                        },
+                        failure: function (res) {
+                            CommonUtils.toast(res.data.msg);
+                        }
+                    })
+                },
+                showRegQRCode: function (id) {
+                    CommonUtils.request({
+                        url: 'qrcode',
+                        data: {content: location.protocol + '//' + location.host + '/register/' + id},
+                        success: function (res) {
+                            app.imgUrl = res.data.content;
+                        }
+                    })
+                },
+                removeById: function (id) {
+                    confirm('确定要删除吗？') && this.updateStatus(id, -1);
+                },
+                updateStatus: function (id, status) {
+                    CommonUtils.request({
+                        url: 'user/status',
+                        data: {id: id, status: status},
+                        config: {method: 'PUT'},
+                        success: function (res) {
+                            CommonUtils.toast(res.data.msg);
+                            app.getData();
+                        }
+                    })
+                },
+                getData: function (current) {
+                    this.reqvo.current = current || this.reqvo.current;
+                    CommonUtils.request({
+                        url: 'user',
+                        data: this.reqvo,
+                        success: function (res) {
+                            app.data = res.data.content;
+                            app.data.records = app.data.records || [];
+                            app.data.pages = parseInt(app.data.pages);
+                            app.$nextTick(function () {
+                                $('#pagination').sPage({
+                                    page: app.data.current,
+                                    pageSize: app.reqvo.size,
+                                    total: parseInt(app.data.total),
+                                    prevPage: "←",
+                                    nextPage: "→",
+                                    backFun: function (page) {
+                                        app.getData(page);
+                                    }
+                                });
+                            });
+                        }
+                    });
+                }
+            }
+        }).$mount('#app');
+    })();
+</script>
+</body>
+</html>

@@ -1,0 +1,530 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>订单管理</title>
+    <th:block th:replace="~{common/commonCss}"></th:block>
+    <link rel="stylesheet" href="/static/css/common/bootstrap-datetimepicker.min.css">
+    <style type="text/css">.tags .f-tag {
+        min-width: 45px;
+        text-align: center;
+    }</style>
+</head>
+<body class="sidebar-fixed header-fixed">
+<div class="page-wrapper">
+    <th:block th:replace="~{user/common/header}"></th:block>
+
+    <div class="main-container">
+        <th:block th:replace="~{user/common/sideBar}"></th:block>
+
+        <div class="content" id="app" v-cloak>
+            <div class="card">
+                <div class="card-header bg-light" style="line-height: 24px;">
+                    <span>订单管理 <i class="fa fa-circle-notch f-csp" title="点击刷新" @click="getData(1)"></i></span>
+                    <span><i class="fa fa-search f-csp" title="显示搜索" @click="showSearch = !showSearch"></i></span>
+                    <div class="f-fr">
+                        <!--<select v-model="currentMonth">-->
+                        <!--<option v-for="month in monthList" :value="month">{{month}}</option>-->
+                        <!--</select>-->
+                        <!--<a class="el-link el-link&#45;&#45;primary is-underline" target="_blank" :href="exportAddress" @click="exportReport(2)">导出订单信息</a>-->
+                        <button class="btn btn-sm btn-primary" data-toggle="modal" data-target="#exportDialog">导出订单信息
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row" v-show="showSearch">
+                        <div class="col-md-12">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="input-group input-group-sm mb-3">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">订单号</span>
+                                                </div>
+                                                <input type="text" class="form-control" placeholder="输入订单号"
+                                                       v-model="reqvo.orderNo">
+                                            </div>
+                                            <div class="input-group input-group-sm mb-3">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">订单状态</span>
+                                                </div>
+                                                <select class="form-control" v-model="reqvo.status"
+                                                        @change="getData(1)">
+                                                    <option :value="null">全部</option>
+                                                    <option :value="0">未支付</option>
+                                                    <option :value="1">已支付</option>
+                                                    <option :value="4">已取消</option>
+                                                    <option :value="6">已过期</option>
+                                                </select>
+                                            </div>
+                                            <div class="input-group input-group-sm mb-3">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">快递状态</span>
+                                                </div>
+                                                <select class="form-control" v-model="reqvo.emsStatus"
+                                                        @change="getData(1)">
+                                                    <option :value="null">全部</option>
+                                                    <option :value="1">已发货</option>
+                                                    <option :value="0">未发货</option>
+                                                </select>
+                                            </div>
+
+                                        </div>
+
+                                        <div class="col-md-4">
+                                            <div class="input-group input-group-sm mb-3">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">手机号</span>
+                                                </div>
+                                                <input type="text" class="form-control" placeholder="输入手机号"
+                                                       v-model="reqvo.phone">
+                                            </div>
+                                            <div class="input-group input-group-sm mb-3">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">快递单</span>
+                                                </div>
+                                                <input type="text" class="form-control" placeholder="输入快递单号"
+                                                       v-model="reqvo.emsNo">
+                                            </div>
+                                            <div class="input-group input-group-sm mb-3">
+                                                <input type="text" class="form-control f-csp" placeholder="开始时间"
+                                                       data-date-format="yyyy-mm-dd" id="startTime" readonly>
+                                                <span style="padding:0 5px;">-</span>
+                                                <input type="text" class="form-control f-csp" placeholder="结束时间"
+                                                       data-date-format="yyyy-mm-dd" id="endTime" readonly>
+                                                <span class="f-danger f-csp f-fs12"
+                                                      style="line-height:30px;padding:0 5px;"
+                                                      @click="removeDt">清空</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <button @click="getData(1)" type="button" class="btn btn-primary btn-sm"><i
+                                                    class="fa fa-search"></i> 搜索
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                            <tr>
+                                <th>商品信息</th>
+                                <th style="width:60px;">数量</th>
+                                <th>状态</th>
+                                <th>金额</th>
+                                <th>时间</th>
+                                <th>快递</th>
+                                <th>客户信息</th>
+                                <th>销售</th>
+                                <th>操作</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr v-for="item in data.records">
+                                <td>
+                                    <div title="订单号">{{item.orderNo}}</div>
+                                    <div title="名称">{{item.name}}</div>
+                                    <div v-if="item.prodProperty" class="f-info">{{item.prodProperty}}</div>
+                                </td>
+                                <td><span class="f-primary">{{item.prodCount}}</span></td>
+                                <td class="tags">
+                                    <div v-if="item.status==0" class="f-tag bgc-inverse f-fs12"
+                                         style="display:inline-block;">未支付
+                                    </div>
+                                    <div v-else-if="item.status==1" class="f-tag bgc-success f-fs12"
+                                         style="display:inline-block;">已支付
+                                    </div>
+                                    <div v-else-if="item.status==4" class="f-tag bgc-warn f-fs12"
+                                         style="display:inline-block;">已取消
+                                    </div>
+                                    <div v-else-if="item.status==3" class="f-tag bgc-danger f-fs12"
+                                         style="display:inline-block;">已退款
+                                    </div>
+                                </td>
+                                <td>￥{{item.totalFee/100}}</td>
+                                <td>
+                                    <div>
+                                        <div>下单:</div>
+                                        <div>{{new Date(item.createTime).Format('yyyy/MM/dd hh:mm:ss')}}</div>
+                                    </div>
+                                    <div v-if="item.payTime" class="mgt5">
+                                        <div>支付:</div>
+                                        <div>{{new Date(item.payTime).Format('yyyy/MM/dd hh:mm:ss')}}</div>
+                                    </div>
+                                </td>
+                                <td class="tags">
+                                    <div v-if="item.emsId==-1" class="f-tag bgc-warn f-fs12"
+                                         style="display:inline-block;">未发货
+                                    </div>
+                                    <span v-else-if="item.ems">{{item.ems.name}}: {{item.ems.emsNo}}</span>
+                                    <span v-else class="f-danger f-fs12">快递信息有误</span>
+                                    <div v-if="item.ems&&item.emsId!=-1" class="f-fs12">
+                                        <button v-if="!item.ems.smsTimes" class="btn btn-sm btn-primary"
+                                                title="发送短信通知客户已发货" :disabled="smsSending"
+                                                @click="sendSms(item.orderNo)">发送短信
+                                        </button>
+                                        <span v-else class="f-tag bgc-success f-ib">已发送短信</span>
+                                        <span v-if="item.ems.smsTimes>0" class="f-tag bgc-warn f-csp f-ib"
+                                              title="发送短信通知客户已发货" :disabled="smsSending" @click="sendSms(item.orderNo)">重新发送</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div v-if="item.user" class="f-info">
+                                        <div>收件人: <b>{{item.user.nickname}}</b></div>
+                                        <div>电话: <b>{{item.user.phone}}</b></div>
+                                        <div v-if="item.user.address">地址: <b>{{item.user.address.addr}}</b></div>
+                                        <div v-if="!!item.mark">备注: <b>{{item.mark}}</b></div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div v-if="item.seller">
+                                        员工：{{item.seller.nickname}}
+                                        <span class="f-info">（{{item.seller.account}}）</span>
+                                    </div>
+                                    <div v-if="item.proxy">
+                                        代理：{{item.proxy.nickname}}
+                                        <span class="f-info">（{{item.proxy.account}}）</span>
+                                    </div>
+                                    <div v-if="item.status==3">
+                                        <div class="f-danger">
+                                            已退款
+                                            <span v-if="item.refundTime">（{{new Date(item.refundTime).Format('yyyy/MM/dd hh:mm:ss')}}）</span>
+                                        </div>
+                                        <div v-if="item.reason" class="f-danger">退款原因：{{item.reason}}</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <button v-if="item.status==1" class="btn btn-sm btn-primary" @click="getEms(item)"
+                                            data-toggle="modal" data-target="#emsDialog">快递信息
+                                    </button>
+                                    <button v-if="item.status==1" class="btn btn-sm btn-danger" @click="entity=item" data-toggle="modal" data-target="#refundDialog">退款</button>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                        <div v-if="!data.records.length" class="f-tac f-info">
+                            <span class="f-fs18">暂无数据</span>
+                        </div>
+                        <div v-if="data.pages>1" style="padding: 0 5px;height: 40px;line-height: 40px;">
+                            <div class="f-fl" style="width:150px;">
+                                <div class="f-fl">每页数量：</div>
+                                <div class="f-fl" style="width: 75px;margin-top:2px;">
+                                    <select v-model="reqvo.size" class="form-control" @change="getData(1)">
+                                        <option :value="10">10</option>
+                                        <option :value="20">20</option>
+                                        <option :value="50">50</option>
+                                        <option :value="100">100</option>
+                                        <option :value="200">200</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div id="pagination"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="emsDialog" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+                 aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">快递信息</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label class="form-control-label">订单</label>
+                                <span class="form-control">{{entity.product.name}}</span>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-control-label require">快递单号</label>
+                                <input type="text" class="form-control" v-model="ems.emsNo" maxlength="128">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-control-label require">快递公司</label>
+                                <input type="text" class="form-control" v-model="ems.name" maxlength="64">
+                            </div>
+                            <div class="form-group">
+                                <button class="btn btn-primary btn-sm w-100" :disabled="!ems.emsNo" @click="saveEms">
+                                    保存
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="refundDialog" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+                 aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">退款</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group f-cb" v-if="entity.user">
+                                <div class="f-fl" style="width: 60px;">客户</div>
+                                <div class="f-fl">{{entity.user.nickname}}</div>
+                            </div>
+                            <div class="form-group f-cb" v-if="entity.user">
+                                <div class="f-fl" style="width: 60px;">电话</div>
+                                <div class="f-fl">{{entity.user.phone}}</div>
+                            </div>
+                            <div class="form-group f-cb">
+                                <div class="f-fl" style="width: 60px;">商品</div>
+                                <div class="f-fl">{{entity.name}}</div>
+                            </div>
+                            <div class="form-group f-cb">
+                                <div class="f-fl" style="width: 60px;">数量</div>
+                                <div class="f-fl">{{entity.prodCount}}</div>
+                            </div>
+                            <div class="form-group f-cb">
+                                <div class="f-fl" style="width: 60px;">总额</div>
+                                <div class="f-fl"><b>￥{{entity.totalFee*entity.prodCount/100.0}}</b></div>
+                            </div>
+                            <div class="form-group f-cb">
+                                <div class="f-fl" style="width: 60px;">快递</div>
+                                <div class="f-fl" v-if="entity.emsId==-1">未发货</div>
+                                <div class="f-fl f-danger" v-else>已发货</div>
+                            </div>
+                            <!--<div class="f-danger">* 请确保微信商户基本账户内余额充足，否则将退款失败。</div>-->
+                            <!--<div class="f-danger">* 退款原因将会体现在用户的微信通知中，请谨慎填写。</div>-->
+                            <div class="form-group" style="margin-top: 1rem;">
+                                <label class="form-control-label require">退款原因</label>
+                                <textarea class="form-control" v-model="entity.reason" maxlength="500" cols="6"
+                                          placeholder="500字以内"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <button class="btn btn-primary btn-sm w-100" @click="refund">保存</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="exportDialog" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+                 aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">导出订单</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+
+                        <div class="modal-body f-tac">
+                            <div class="f-cb">
+                                <div class="input-group input-group-sm mb-3"
+                                     style="margin-bottom:0 !important;line-height:28px;">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">选择时间</span>
+                                    </div>
+                                    <input type="text" class="form-control f-csp" v-model="startTime" placeholder="开始时间"
+                                           data-date-format="yyyy-mm-dd hh:mm:ss" id="exportStartTime" readonly>
+                                    <span style="padding:0 5px;">-</span>
+                                    <input type="text" class="form-control f-csp" v-model="endTime" placeholder="结束时间"
+                                           data-date-format="yyyy-mm-dd hh:mm:ss" id="exportEndTime" readonly>
+                                    <a class="el-link el-link--primary is-underline" target="_blank"
+                                       :href="exportAddress" @click="exportReport($event)" style="padding-left:5px;">导出订单信息</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<th:block th:replace="~{common/commonJs}"></th:block>
+<th:block th:replace="~{common/commonJs2}"></th:block>
+<script src="https://yangyangdeyi.oss-cn-shenzhen.aliyuncs.com/static/js/datetime/2019831103148477.js"></script>
+<script type="text/javascript">
+    ;(function ($) {
+        $.fn.datetimepicker.dates['zh-CN'] = {
+            days: ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日"],
+            daysShort: ["周日", "周一", "周二", "周三", "周四", "周五", "周六", "周日"],
+            daysMin: ["日", "一", "二", "三", "四", "五", "六", "日"],
+            months: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"],
+            monthsShort: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"],
+            today: "今天", suffix: [], meridiem: ["上午", "下午"]
+        };
+    }(jQuery));
+    (function () {
+        var app = new Vue({
+            data: {
+                data: {records: [], pages: 1},
+                reqvo: {current: 1, status: null, emsStatus: null, size: 10},
+                entity: {product: {}},
+                ems: {},
+                currentMonth: null,
+                exportAddress: '',
+                monthList: [],
+                showSearch: false,
+                smsSending: false,
+                startTime: null,
+                endTime: null
+            },
+            mounted: function () {
+                var month = new Date;
+                for (var i = 0; i < 12; i++) {
+                    this.monthList.push(month.Format('yyyy-MM'));
+                    month.setMonth(month.getMonth() - 1);
+                }
+                this.currentMonth = this.monthList[0];
+                this.getData(1);
+                this.initDatePicker();
+            },
+            methods: {
+                refund: function () {
+                    CommonUtils.request({
+                        url: 'order/refund',
+                        config: {method: 'PUT'},
+                        data: {orderNo: this.entity.orderNo, reason: this.entity.reason},
+                        success: function (res) {
+                            $('#refundDialog').modal('hide');
+                            app.getData();
+                        },
+                        always: function (res) {
+                            CommonUtils.toast(res.data.msg)
+                        }
+                    });
+                },
+                removeDt: function () {
+                    $('#startTime,#endTime').val(null);
+                    this.reqvo.st = null;
+                    this.reqvo.et = null;
+                },
+                initDatePicker: function () {
+                    var config = {
+                        language: 'zh-CN',
+                        weekStart: 1,
+                        todayBtn: 1,
+                        autoclose: 1,
+                        todayHighlight: 1,
+                        startView: 2,
+                        minView: 2,
+                        forceParse: true
+                    };
+                    $('#startTime').datetimepicker(config).on('changeDate', function (e) {
+                        e.date && (app.reqvo.st = e.date.Format('yyyy-MM-dd 00:00:00'));
+                    });
+                    $('#endTime').datetimepicker(config).on('changeDate', function (e) {
+                        e.date && (app.reqvo.et = e.date.Format('yyyy-MM-dd 59:59:59'));
+                    });
+                    var config2 = {
+                        language: 'zh-CN',
+                        weekStart: 1,
+                        todayBtn: 1,
+                        autoclose: 1,
+                        todayHighlight: 1,
+                        startView: 2,
+                        minView: 1,
+                        forceParse: false
+                    };
+                    $('#exportStartTime').datetimepicker(config2).on('changeDate', function (e) {
+                        e.date && (app.startTime = e.date.Format('yyyy-MM-dd hh:00:00'));
+                    });
+                    $('#exportEndTime').datetimepicker(config2).on('changeDate', function (e) {
+                        e.date && (app.endTime = e.date.Format('yyyy-MM-dd hh:00:00'));
+                    });
+                },
+                exportReport: function (e) {
+                    if (!this.startTime && !this.endTime) {
+                        CommonUtils.toast('请选择日期');
+                        e.preventDefault(e);
+                        return false;
+                    }
+                    var s = 'http://' + location.host + '/order/export?';
+                    if (this.startTime)
+                        s += '&st=' + this.startTime;
+                    if (this.endTime)
+                        s += '&et=' + this.endTime;
+                    this.exportAddress = s;
+                },
+                sendSms: function (orderNo) {
+                    if (confirm('确定要发送短信通知客户已发货吗？')) {
+                        this.smsSending = true;
+                        CommonUtils.request({
+                            url: 'sms/ems/' + orderNo, success: function () {
+                                app.getData()
+                            }, always: function (res) {
+                                app.smsSending = false;
+                                CommonUtils.toast(res.data.msg)
+                            }
+                        });
+                    }
+                },
+                saveEms: function () {
+                    var params = {
+                        url: 'ems', data: this.ems, success: function (res) {
+                            app.getData();
+                            $('#emsDialog').modal('hide')
+                        }, always: function (res) {
+                            CommonUtils.toast(res.data.msg);
+                        }
+                    };
+                    if (!this.ems.id) {
+                        this.ems.orderNo = this.entity.orderNo;
+                        params.config = {method: 'POST'};
+                    } else {
+                        params.config = {method: 'PUT'};
+                    }
+                    CommonUtils.request(params);
+                },
+                getEms: function (entity) {
+                    this.entity = entity;
+                    CommonUtils.request({
+                        url: 'ems/order/' + entity.orderNo,
+                        success: function (res) {
+                            app.ems = res.data.content || {};
+                            app.entity.ems = $.extend({}, app.ems);
+                        }
+                    })
+                },
+                getData: function (pageNo) {
+                    this.reqvo.current = pageNo || this.reqvo.current;
+                    CommonUtils.request({
+                        url: 'order',
+                        data: this.reqvo,
+                        success: function (res) {
+                            app.data = res.data.content;
+                            app.data.records = app.data.records || [];
+                            app.data.pages = parseInt(app.data.pages);
+                            app.$nextTick(function () {
+                                $('#pagination').sPage({
+                                    page: app.data.current,
+                                    pageSize: app.reqvo.size,
+                                    total: parseInt(app.data.total),
+                                    prevPage: "←",
+                                    nextPage: "→",
+                                    backFun: function (page) {
+                                        app.getData(page);
+                                    }
+                                });
+                            });
+                        }
+                    })
+                }
+            }
+        }).$mount('#app');
+    })();
+</script>
+</body>
+</html>

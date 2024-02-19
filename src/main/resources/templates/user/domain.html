@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>域名管理</title>
+    <th:block th:replace="~{common/commonCss}"></th:block>
+</head>
+<body class="sidebar-fixed header-fixed">
+<div class="page-wrapper">
+    <th:block th:replace="~{user/common/header}"></th:block>
+
+    <div class="main-container">
+        <th:block th:replace="~{user/common/sideBar}"></th:block>
+
+        <div class="content" id="app" v-cloak>
+            <div class="card">
+                <div class="card-header bg-light">
+                    <span>域名管理</span>
+                    <div class="f-fr">
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-toggle="modal"
+                                data-target="#addProxyDialog">添加域名
+                        </button>
+                    </div>
+                    <div class="f-fr" style="margin-right: 5px;">
+                        <div class="input-group input-group-sm f-fr" style="width: 40%;">
+                            <select class="form-control" v-model="reqvo.type" @change="getData(1)">
+                                <option :value="null">全部</option>
+                                <option :value="1">产品</option>
+                                <option :value="2">用户活码</option>
+                            </select>
+                        </div>
+                        <div class="input-group input-group-sm f-fr" style="width: 50%;margin-right: 5px;">
+                            <input type="text" class="form-control" placeholder="搜索" v-model="reqvo.name">
+                            <div class="input-group-append f-csp">
+                                <span class="input-group-text" @click="getData(1)"><i class="fa fa-search"></i></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                            <tr>
+                                <th>域名</th>
+                                <th>状态</th>
+                                <th>类型</th>
+                                <th>服务器IP</th>
+                                <th>服务商</th>
+                                <th>备注</th>
+                                <th>创建时间</th>
+                                <th>操作</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr v-for="item in data.records">
+                                <td>{{item.name}}</td>
+                                <td>
+                                    <button v-if="item.status==1" type="button" class="btn btn-sm btn-outline-success">
+                                        正常
+                                    </button>
+                                    <button v-if="item.status==2" type="button" class="btn btn-sm btn-outline-warning">
+                                        暂停
+                                    </button>
+                                </td>
+                                <td>
+                                    <div v-if="item.type==1" class="f-ib f-tag bgc-success">产品</div>
+                                    <div v-if="item.type==2" class="f-ib f-tag bgc-info">用户活码</div>
+                                </td>
+                                <td class="text-nowrap">{{item.ip}}</td>
+                                <td>{{item.provider}}</td>
+                                <td>{{item.mark}}</td>
+                                <td>
+                                    <span v-if="item.createTime">{{new Date(item.createTime).Format('yyyy/MM/dd hh:mm')}}</span>
+                                </td>
+                                <td>
+                                    <button v-if="item.roleId!=1" type="button" class="btn btn-sm btn-primary"
+                                            @click="edit(item)">编辑
+                                    </button>
+                                    <button v-if="item.status!=2" type="button" class="btn btn-sm btn-warning"
+                                            @click="updateStatus(item.id, 2)">暂停使用
+                                    </button>
+                                    <button v-if="item.status==2" type="button" class="btn btn-sm btn-success"
+                                            @click="updateStatus(item.id, 1)">恢复
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-danger" @click="removeById(item.id)">
+                                        删除
+                                    </button>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                        <div v-if="!data.records.length" class="f-tac f-info">
+                            <span class="f-fs18">暂无数据</span>
+                        </div>
+                    </div>
+                    <div style="padding: 0 5px;" v-if="data.pages > 1">
+                        <ul class="pagination">
+                            <li v-if="data.current>1" class="page-item" @click="getData(reqvo.current-1)"><a
+                                    class="page-link">上一页</a></li>
+                            <li v-for="n in data.pages" class="page-item" :class="{active: n==reqvo.current}"
+                                @click="getData(n)">
+                                <a class="page-link">{{n}}</a>
+                            </li>
+                            <li v-if="data.current<data.pages" class="page-item" @click="getData(reqvo.current+1)"><a
+                                    class="page-link">下一页</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="addProxyDialog" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+                 aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">编辑域名</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label class="form-control-label require">域名</label>
+                                <input type="text" class="form-control" v-model="entity.name" maxlength="128"
+                                       placeholder="输入名称">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-control-label">域名类型</label>
+                                <select v-model="entity.type" class="form-control">
+                                    <option :value="1">产品</option>
+                                    <option :value="2">用户活码</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-control-label">服务器IP</label>
+                                <input type="text" class="form-control" v-model="entity.ip" maxlength="128"
+                                       placeholder="输入服务器ip地址">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-control-label">服务商</label>
+                                <input type="text" class="form-control" v-model="entity.provider" maxlength="64"
+                                       placeholder="输入域名服务商">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-control-label">备注</label>
+                                <input type="text" class="form-control" v-model="entity.mark" placeholder="100字以内"
+                                       maxlength="100">
+                            </div>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary" @click="save()">提交</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<th:block th:replace="~{common/commonJs}"></th:block>
+<th:block th:replace="~{common/commonJs2}"></th:block>
+<script type="text/javascript">
+    (function () {
+        var app = new Vue({
+            data: {
+                entity: {},
+                data: {records: [], pages: 1},
+                reqvo: {current: 1, name: null, type: null}
+            },
+            mounted: function () {
+                this.getData(1);
+            },
+            methods: {
+                edit: function (entity) {
+                    this.entity = $.extend({}, entity);
+                    $("#addProxyDialog").modal('show');
+                },
+                removeById: function (id) {
+                    confirm('确定要删除吗？') && this.updateStatus(id, -1);
+                },
+                updateStatus: function (id, status) {
+                    CommonUtils.request({
+                        url: '/domain/status',
+                        data: {id: id, status: status},
+                        config: {method: 'PUT'},
+                        success: function (res) {
+                            CommonUtils.toast(res.data.msg);
+                            app.getData();
+                        }
+                    })
+                },
+                initForm: function () {
+                    this.entity = {
+                        name: null, ip: null, provider: null, mark: null
+                    };
+                },
+                save: function () {
+                    if (!this.entity.name) {
+                        CommonUtils.toast('请输入域名！');
+                        return false;
+                    }
+                    CommonUtils.request({
+                        url: '/domain',
+                        data: this.entity,
+                        config: {method: 'POST'},
+                        success: function (res) {
+                            CommonUtils.toast(res.data.msg);
+                            app.getData(1);
+                            app.initForm();
+                            $("#addProxyDialog").modal('hide');
+                        },
+                        failure: function (res) {
+                            CommonUtils.toast(res.data.msg);
+                        }
+                    })
+                },
+                getData: function (pageNo) {
+                    this.reqvo.current = pageNo || this.reqvo.current;
+                    CommonUtils.request({
+                        url: '/domain',
+                        data: this.reqvo,
+                        success: function (res) {
+                            app.data = res.data.content;
+                            app.data.records = app.data.records || [];
+                        }
+                    })
+                }
+            }
+        }).$mount('#app');
+    })();
+</script>
+</body>
+</html>

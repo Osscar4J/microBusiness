@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>产品管理</title>
+    <th:block th:replace="~{common/commonCss}"></th:block>
+    <style type="text/css">.fa:hover {
+        color: #0c87eb;
+    }</style>
+</head>
+<body class="sidebar-fixed header-fixed">
+<div class="page-wrapper">
+    <th:block th:replace="~{user/common/header}"></th:block>
+
+    <div class="main-container">
+        <th:block th:replace="~{user/common/sideBar}"></th:block>
+
+        <div class="content" id="app" v-cloak>
+            <div class="card">
+                <div class="card-header bg-light" style="line-height: 24px;">
+                    <span>商品管理 <i class="fa fa-circle-notch f-csp" title="点击刷新" @click="getData(1)"></i></span>
+                    <div class="f-fr">
+                        <a href="/product/edit" class="btn btn-sm btn-outline-primary">添加商品</a>
+                    </div>
+                    <div class="f-fr" style="margin-right: 5px;">
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control" placeholder="搜索" v-model="reqvo.name"
+                                   @keyup.enter="getData(1)">
+                            <div class="input-group-append f-csp">
+                                <span class="input-group-text" @click="getData(1)"><i class="fa fa-search"></i></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                            <tr>
+                                <th>封面</th>
+                                <th>名称</th>
+                                <th>状态</th>
+                                <th>浏览量</th>
+                                <th>价格</th>
+                                <th>原价</th>
+                                <th>展示销量</th>
+                                <th>实际销量</th>
+                                <th>操作</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr v-for="item in data.records" style="line-height: 100px;">
+                                <td>
+                                    <div class="cover">
+                                        <img :src="item.cover" style="max-width: 100px;max-height: 100px;">
+                                    </div>
+                                </td>
+                                <td class="text-nowrap">{{item.name}}</td>
+                                <td>
+                                    <span v-if="item.status==0" class="f-tag bgc-inverse">未上架</span>
+                                    <span v-else-if="item.status==1" class="f-tag bgc-success">已上架</span>
+                                </td>
+                                <td>{{item.clickCount}}</td>
+                                <td class="f-success">￥{{item.priceF}}</td>
+                                <td :class="{'f-danger':item.price!=item.originPrice,'f-success':item.price==item.originPrice}">
+                                    ￥{{item.originPriceF}}
+                                </td>
+                                <td>{{item.sellCount}}</td>
+                                <td><b>{{item.actSellCount}}</b></td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-outline-success" data-toggle="modal"
+                                            data-target="#employeeDialog" @click="getViews(1,item)">浏览记录
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-primary" data-toggle="modal"
+                                            data-target="#addProxyDialog" @click="getRemain(item)">修改库存
+                                    </button>
+                                    <a :href="'/product/edit?id='+item.id">
+                                        <button type="button" class="btn btn-sm btn-outline-primary">编辑</button>
+                                    </a>
+                                    <button v-if="item.status==1" type="button" class="btn btn-sm btn-warning"
+                                            @click="updateStatus(item.id, 0)">下架
+                                    </button>
+                                    <button v-else-if="item.status==0" type="button" class="btn btn-sm btn-success"
+                                            @click="updateStatus(item.id, 1)">上架
+                                    </button>
+                                    <button v-if="item.status==0" type="button" class="btn btn-sm btn-danger"
+                                            @click="removeById(item.id)">删除
+                                    </button>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                        <div v-if="!data.records.length" class="f-tac f-info">
+                            <span class="f-fs18">暂无数据</span>
+                        </div>
+                    </div>
+                    <div style="padding: 0 5px;" v-if="data.pages > 1">
+                        <ul class="pagination">
+                            <li v-if="data.current>1" class="page-item" @click="getData(reqvo.current-1)"><a
+                                    class="page-link">上一页</a></li>
+                            <li v-for="n in data.pages" class="page-item" :class="{active: n==reqvo.current}"
+                                @click="getData(n)">
+                                <a class="page-link">{{n}}</a>
+                            </li>
+                            <li v-if="data.current<data.pages" class="page-item" @click="getData(reqvo.current+1)"><a
+                                    class="page-link">下一页</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="addProxyDialog" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+                 aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">{{entity.name}}-库存</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="input-group input-group-sm mgt10" v-for="item in entity.remains">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" style="width: 100px;">{{item.propertyName}}</span>
+                                </div>
+                                <input type="text" class="form-control" placeholder="输入剩余库存" v-model="item.remain">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary w-100" @click="updateRemain">保存</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="employeeDialog" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+                 aria-hidden="true">
+                <div class="modal-dialog modal-lg" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">{{entity.name}}浏览记录</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body f-tac">
+                            <div class="table-responsive mgt5">
+                                <table class="table">
+                                    <thead>
+                                    <tr>
+                                        <th>IP</th>
+                                        <th>时间</th>
+                                        <th>微商</th>
+                                        <th>代理</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr v-for="item in performance.records">
+                                        <td>{{item.ip}}</td>
+                                        <td>{{new Date(item.createTime).Format('yyyy/MM/dd hh:mm:ss')}}</td>
+                                        <td>
+                                            <div v-if="item.seller" class="f-tal">
+                                                <div>昵称：{{item.seller.nickname}}</div>
+                                                <div>账号：{{item.seller.account}}</div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div v-if="item.proxy" class="f-tal">
+                                                <div>昵称：{{item.proxy.nickname}}</div>
+                                                <div>账号{{item.proxy.account}}</div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div v-if="!performance.records.length" class="f-tac f-info">
+                                <span class="f-fs18">暂无数据</span>
+                            </div>
+                            <div id="pagination"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<th:block th:replace="~{common/commonJs}"></th:block>
+<th:block th:replace="~{common/commonJs2}"></th:block>
+<script type="text/javascript">
+    (function () {
+        var app = new Vue({
+            data: {
+                data: {records: []},
+                entity: {},
+                reqvo: {name: null, current: 1},
+                performance: {records: [], pages: 0},
+                employeeReqVO: {prodId: null, current: 1}
+            },
+            mounted: function () {
+                this.getData(1);
+            },
+            methods: {
+                getViews: function (pageNo, entity) {
+                    this.entity = entity || this.entity;
+                    this.employeeReqVO.prodId = this.entity.id;
+                    this.employeeReqVO.current = pageNo || this.employeeReqVO.current;
+                    CommonUtils.request({
+                        url: 'product/view',
+                        data: this.employeeReqVO,
+                        success: function (res) {
+                            app.performance = res.data.content;
+                            app.performance.records = app.performance.records || [];
+                            app.$nextTick(function () {
+                                if (app.performance.pages > 1) {
+                                    $('#pagination').sPage({
+                                        page: app.performance.current,
+                                        pageSize: app.employeeReqVO.size,
+                                        total: parseInt(app.performance.total),
+                                        prevPage: "←",
+                                        nextPage: "→",
+                                        backFun: function (page) {
+                                            app.getViews(page);
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                    });
+                },
+                updateRemain: function () {
+                    CommonUtils.request({
+                        url: 'product/remain',
+                        data: {remains: this.entity.remains},
+                        config: {method: 'PUT'},
+                        success: function (res) {
+                            $('#addProxyDialog').modal('hide')
+                        },
+                        always: function (res) {
+                            CommonUtils.toast(res.data.msg)
+                        }
+                    })
+                },
+                getRemain: function (item) {
+                    this.entity = item;
+                    CommonUtils.request({
+                        url: 'product/remain/' + item.id, success: function (res) {
+                            app.$set(app.entity, 'remains', res.data.content || [])
+                        }, failure: function (res) {
+                            CommonUtils.toast(res.data.msg)
+                        }
+                    })
+                },
+                removeById: function (id) {
+                    confirm('确定要删除吗？') && this.updateStatus(id, -1);
+                },
+                updateStatus: function (id, status) {
+                    CommonUtils.request({
+                        url: '/product/status',
+                        data: {id: id, status: status},
+                        config: {method: 'PUT'},
+                        success: function (res) {
+                            CommonUtils.toast(res.data.msg);
+                            app.getData();
+                        }
+                    })
+                },
+                getData: function (pageNo) {
+                    this.reqvo.current = pageNo || this.reqvo.current;
+                    CommonUtils.request({
+                        url: 'product',
+                        data: this.reqvo,
+                        success: function (res) {
+                            app.data = res.data.content;
+                            app.data.records = app.data.records || [];
+                        }
+                    })
+                }
+            }
+        }).$mount('#app');
+    })();
+</script>
+</body>
+</html>

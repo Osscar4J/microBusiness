@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.zhao.micro.mapper.OrderMapper">
+    <resultMap type="com.zhao.micro.entity.Order" id="BaseResultMap">
+        <id column="order_no" property="orderNo"/>
+        <result column="transation_no" property="transationNo"/>
+        <result column="status" property="status"/>
+        <result column="name" property="name"/>
+        <result column="prod_id" property="prodId"/>
+        <result column="seller_id" property="sellerId"/>
+        <result column="total_fee" property="totalFee"/>
+        <result column="ems_id" property="emsId"/>
+        <result column="prod_count" property="prodCount"/>
+        <result column="pay_style" property="payStyle"/>
+        <result column="create_time" property="createTime"/>
+        <result column="pay_time" property="payTime"/>
+        <result column="prod_property" property="prodProperty"/>
+        <result column="mark" property="mark"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="refund_time" property="refundTime"/>
+        <result column="reason" property="reason"/>
+    </resultMap>
+
+    <resultMap id="DetailResultRM" type="com.zhao.micro.entity.Order" extends="BaseResultMap">
+        <association property="product" javaType="com.zhao.micro.entity.Product">
+            <id column="pId" property="id"/>
+            <result column="pName" property="name"/>
+            <result column="pPrice" property="price"/>
+            <result column="pOriginPrice" property="originPrice"/>
+            <result column="pCover" property="cover"/>
+        </association>
+        <association property="user" javaType="com.zhao.micro.entity.User">
+            <id column="uId" property="id"/>
+            <result column="nickname" property="nickname"/>
+            <result column="uPhone" property="phone"/>
+            <association property="address" javaType="com.zhao.micro.entity.Address">
+                <id column="aId" property="id"/>
+                <result column="areaId" property="areaId"/>
+                <result column="addr" property="addr"/>
+            </association>
+        </association>
+        <association property="ems" javaType="com.zhao.micro.entity.Ems">
+            <id column="eId" property="id"/>
+            <result column="emsNo" property="emsNo"/>
+            <result column="smsTimes" property="smsTimes"/>
+            <result column="eName" property="name"/>
+            <result column="eCreateTime" property="createTime"/>
+        </association>
+        <association property="seller" javaType="com.zhao.micro.entity.User">
+            <id column="sellerId" property="id"/>
+            <result column="sellerNickname" property="nickname"/>
+            <result column="sellerAccount" property="account"/>
+        </association>
+        <association property="proxy" javaType="com.zhao.micro.entity.User">
+            <id column="proxyId" property="id"/>
+            <result column="proxyNickname" property="nickname"/>
+            <result column="proxyAccount" property="account"/>
+        </association>
+    </resultMap>
+
+    <resultMap id="AmountModelRM" type="com.zhao.micro.model.AmountModel">
+        <result column="date" property="date"/>
+        <result column="sum" property="sum"/>
+    </resultMap>
+
+    <sql id="BaseSelectColumn">
+        self.order_no, self.transation_no, self.status, self.name, self.prod_id, self.seller_id, self.total_fee,
+        self.ems_id, self.prod_count,
+        self.pay_style, self.create_time,self.pay_time, self.prod_property, self.mark, self.update_time,
+        self.refund_time, self.reason
+    </sql>
+
+    <sql id="LinkedSql">
+        from order_tb self
+    </sql>
+
+    <sql id="PageConditionSql">
+        where self.status!=-1
+        <if test="reqvo.name!=null and reqvo.name!=''">
+            and self.name like #{reqvo.name}
+        </if>
+        <if test="reqvo.orderNo!=null and reqvo.orderNo!=''">
+            and self.order_no=#{reqvo.orderNo}
+        </if>
+        <if test="reqvo.sellerId!=null">
+            and self.seller_id=#{reqvo.sellerId}
+        </if>
+        <if test="reqvo.status!=null">
+            and self.status=#{reqvo.status}
+        </if>
+        <if test="reqvo.phone!=null and reqvo.phone!=''">
+            and u.phone=#{reqvo.phone}
+        </if>
+        <if test="reqvo.emsNo!=null and reqvo.emsNo!=''">
+            and self.ems_id=#{reqvo.emsNo}
+        </if>
+        <if test="reqvo.emsStatus!=null and reqvo.emsStatus==0">
+            and self.ems_id=-1
+        </if>
+        <if test="reqvo.emsStatus!=null and reqvo.emsStatus==1">
+            and self.ems_id!=-1
+        </if>
+        <if test="reqvo.month!=null and reqvo.month!=''">
+            and DATE_FORMAT(self.create_time, '%Y-%m')=#{reqvo.month}
+        </if>
+        <if test="reqvo.st!=null and reqvo.st!=''">
+            and <![CDATA[self.create_time>#{reqvo.st}]]>
+        </if>
+        <if test="reqvo.et!=null and reqvo.et!=''">
+            and <![CDATA[self.create_time<=#{reqvo.et}]]>
+        </if>
+        <if test="reqvo.orderNoOrPhone!=null and reqvo.orderNoOrPhone!=''">
+            and (self.order_no=#{reqvo.orderNoOrPhone} or u.phone=#{reqvo.orderNoOrPhone})
+        </if>
+    </sql>
+
+    <select id="selectPage" resultMap="DetailResultRM">
+        select
+        <include refid="BaseSelectColumn"></include>
+        ,p.id pId, p.name pName, p.price pPrice, p.origin_price pOriginPrice, p.cover pCover
+        ,e.id eId, e.ems_no emsNo, e.sms_times smsTimes, e.name eName, e.create_time eCreateTime
+        ,u.id uId, u.nickname, u.phone uPhone
+        ,a.id aId, a.area_id areaId, a.addr
+        ,seller.id sellerId, seller.nickname sellerNickname, seller.account sellerAccount
+        ,proxy.id proxyId, proxy.nickname proxyNickname, proxy.account proxyAccount
+        <include refid="LinkedSql"></include>
+        left join product_tb p on p.id=self.prod_id
+        left join ems_tb e on e.order_no=self.order_no
+        LEFT JOIN user_tb u on u.id=self.user_id
+        left join address_tb a on a.status!=-1 and a.user_id=u.id
+        left join user_tb seller on seller.id=self.seller_id
+        left join user_tb proxy on proxy.id=self.proxy_id
+        <include refid="PageConditionSql"></include>
+        order by self.order_no desc
+    </select>
+
+    <select id="selectSumByStatus" resultType="long">
+        select sum(total_fee) from order_tb self
+        where status=#{status}
+        <if test="proxyId!=null">
+            and self.proxy_id=#{proxyId}
+        </if>
+        <if test="sellerId!=null">
+            and self.seller_id=#{sellerId}
+        </if>
+    </select>
+
+    <select id="selectDetail" resultMap="DetailResultRM">
+        SELECT
+        <include refid="BaseSelectColumn"></include>
+        ,p.id pId, p.name pName, p.price pPrice, p.origin_price pOriginPrice, p.cover pCover
+        ,e.ems_no emsNo, e.sms_times smsTimes, e.name eName, e.create_time eCreateTime
+        ,u.id uId, u.nickname, u.phone uPhone
+        ,a.id aId, a.area_id areaId, a.addr
+        FROM order_tb self
+        left join product_tb p on p.id=self.prod_id
+        left join ems_tb e on e.order_no=self.order_no
+        LEFT JOIN user_tb u on u.id=self.user_id
+        left join address_tb a on a.status!=-1 and a.user_id=u.id
+        <include refid="PageConditionSql"></include>
+        order by self.order_no desc
+        limit 1
+    </select>
+
+    <select id="selectAmount" resultMap="AmountModelRM">
+        SELECT DATE_FORMAT(create_time, '%Y-%m-%d') as date, SUM(total_fee) as sum
+        FROM order_tb
+        WHERE <![CDATA[create_time>#{st} and create_time<=#{et} and status=1]]>
+        <if test="proxyId!=null">
+            and proxy_id=#{proxyId}
+        </if>
+        GROUP BY DATE_FORMAT(create_time, '%Y-%m-%d')
+    </select>
+
+</mapper>

@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title th:text="${page==null?'编辑':page.name}"></title>
+    <th:block th:replace="~{common/commonCss}"></th:block>
+</head>
+<body class="sidebar-fixed header-fixed">
+<div class="page-wrapper">
+    <th:block th:replace="~{user/common/header}"></th:block>
+
+    <div class="main-container">
+        <th:block th:replace="~{user/common/sideBar}"></th:block>
+
+        <div class="content" id="app" v-cloak>
+            <div v-if="entity">
+                <input class="form-control" v-model="entity.name" placeholder="输入名称" maxlength="64">
+                <textarea style="margin-top: 1.5rem;" class="form-control" v-model="entity.mark" maxlength="100"
+                          placeholder="备注"></textarea>
+            </div>
+            <div style="margin-top: 1.5rem;">
+                <textarea id="ue-container" name="content" type="text/plain" th:text="${page!=null?page.content:null}"
+                          style="height: 600px;"></textarea>
+            </div>
+            <div class="f-tac">
+                <button style="margin-top: 1.5rem;" class="btn btn-primary w-25" @click="save()">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+<th:block th:replace="~{common/commonJs}"></th:block>
+<th:block th:replace="~{common/commonJs2}"></th:block>
+<script type="text/javascript" src="/static/ueditor/ueditor.config.js"></script>
+<script type="text/javascript" src="/static/ueditor/ueditor.all.js"></script>
+<script th:inline="javascript">
+    (function () {
+        var ue;
+        var app = new Vue({
+            data: {
+                entity: [[${page != null ? page : null}]]
+            },
+            mounted: function () {
+                this.entity = this.entity || {name: null};
+                ue = UE.getEditor('ue-container', {
+                    imageUrlPrefix: 'https://yangyangdeyi.oss-cn-shenzhen.aliyuncs.com',
+                    imageAllowFiles: [".png", ".jpg", ".jpeg", ".gif", ".bmp"],
+                    toolbars: [
+                        ['fullscreen', 'source', 'undo', 'redo'],
+                        [
+                            'fontfamily', 'fontsize', 'bold', 'italic', 'underline', 'fontborder', 'strikethrough', 'superscript', 'subscript', 'justifyleft', 'justifyright', 'justifycenter', 'justifyjustify', 'removeformat', 'formatmatch', 'autotypeset', 'blockquote', 'pasteplain',
+                            '|',
+                            'forecolor', 'backcolor', 'insertorderedlist', 'insertunorderedlist', 'selectall', 'cleardoc',
+                            '|',
+                            'simpleupload', 'insertimage', 'insertcode', 'imagenone', 'imageleft', 'imageright', 'imagecenter', 'lineheight', 'rowspacingtop', 'rowspacingbottom', 'inserttable'
+                        ]
+                    ]
+                });
+            },
+            methods: {
+                save: function () {
+                    this.entity.content = ue.getContent();
+                    CommonUtils.request({
+                        url: 'page', config: {method: 'POST'},
+                        data: this.entity,
+                        success: function (res) {
+                            CommonUtils.toast(res.data.msg);
+                            setTimeout(function () {
+                                location.href = '/user/page';
+                            }, 200);
+                        }
+                    });
+                }
+            }
+        }).$mount('#app');
+    })();
+</script>
+</body>
+</html>

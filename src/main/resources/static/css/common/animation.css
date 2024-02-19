@@ -1,0 +1,302 @@
+@keyframes breath {
+    0% {
+        opacity: .2
+    }
+    70% {
+        opacity: 1
+    }
+    to {
+        opacity: .2
+    }
+}
+
+@keyframes flash {
+    0% {
+        opacity: 0
+    }
+    to {
+        opacity: 1
+    }
+}
+
+@keyframes square-spin {
+    25% {
+        -webkit-transform: perspective(100px) rotateX(180deg) rotateY(0);
+        transform: perspective(100px) rotateX(180deg) rotateY(0);
+    }
+    50% {
+        -webkit-transform: perspective(100px) rotateX(180deg) rotateY(180deg);
+        transform: perspective(100px) rotateX(180deg) rotateY(180deg);
+    }
+    75% {
+        -webkit-transform: perspective(100px) rotateX(0) rotateY(180deg);
+        transform: perspective(100px) rotateX(0) rotateY(180deg);
+    }
+    100% {
+        -webkit-transform: perspective(100px) rotateX(0) rotateY(0);
+        transform: perspective(100px) rotateX(0) rotateY(0);
+    }
+}
+
+@keyframes slideInUp {
+    0% {
+        transform: translate3d(0, 100%, 0);
+        visibility: visible
+    }
+    to {
+        transform: translateZ(0)
+    }
+}
+
+@keyframes slideInLeft {
+    0% {
+        transform: translate3d(100%, 0, 0);
+        visibility: visible
+    }
+    to {
+        transform: translateZ(0)
+    }
+}
+
+@keyframes slideInRight {
+    0% {
+        -webkit-transform: translate3d(-100%, 0, 0);
+        transform: translate3d(-100%, 0, 0);
+        visibility: visible
+    }
+    to {
+        -webkit-transform: translateZ(0);
+        transform: translateZ(0)
+    }
+}
+
+@keyframes slideOutRight {
+    0% {
+        transform: translateZ(0)
+    }
+    to {
+        visibility: hidden;
+        transform: translate3d(100%, 0, 0)
+    }
+}
+
+@keyframes slideOutLeft {
+    0% {
+        -webkit-transform: translateZ(0);
+        transform: translateZ(0)
+    }
+    to {
+        -webkit-transform: translate3d(-100%, 0, 0);
+        transform: translate3d(-100%, 0, 0);
+        visibility: hidden
+    }
+}
+
+@keyframes fadeIn {
+    0% {
+        opacity: 0
+    }
+    to {
+        opacity: 1
+    }
+}
+
+@keyframes fadeOut {
+    0% {
+        opacity: 1
+    }
+    to {
+        opacity: 0
+    }
+}
+
+@keyframes tada {
+    0% {
+        transform: scaleX(1)
+    }
+    10%, 20% {
+        transform: scale3d(.9, .9, .9) rotate(-3deg)
+    }
+    30%, 50%, 70%, 90% {
+        transform: scale3d(1.1, 1.1, 1.1) rotate(3deg)
+    }
+    40%, 60%, 80% {
+        transform: scale3d(1.1, 1.1, 1.1) rotate(-3deg)
+    }
+    to {
+        transform: scaleX(1)
+    }
+}
+
+@keyframes bounce {
+    0%, to {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+    100% {
+        transform: translateY(0px);
+    }
+}
+
+@keyframes bounceInUp {
+    0%, 60%, 75%, 90%,
+    to {
+        animation-timing-function: cubic-bezier(.215, .61, .355, 1)
+    }
+    0% {
+        opacity: 0;
+        transform: translate3d(0, 80px, 0)
+    }
+    60% {
+        opacity: 1;
+        transform: translate3d(0, -20px, 0)
+    }
+    75% {
+        transform: translate3d(0, 10px, 0)
+    }
+    90% {
+        transform: translate3d(0, -5px, 0)
+    }
+    to {
+        transform: translateZ(0)
+    }
+}
+
+@keyframes zoomOutDown {
+    40% {
+        opacity: 1;
+        transform: scale3d(.475, .475, .475) translate3d(0, -60px, 0);
+        animation-timing-function: cubic-bezier(.55, .055, .675, .19)
+    }
+    to {
+        opacity: 0;
+        transform: scale3d(.1, .1, .1) translate3d(0, 2000px, 0);
+        transform-origin: center bottom;
+        animation-timing-function: cubic-bezier(.175, .885, .32, 1)
+    }
+}
+
+@keyframes zoomIn {
+    0% {
+        opacity: 0;
+        transform: scale3d(.3, .3, .3)
+    }
+    50% {
+        opacity: 1
+    }
+}
+
+@keyframes spin {
+    0% {
+        -webkit-transform: rotate(0deg);
+        transform: rotate(0deg);
+    }
+    100% {
+        -webkit-transform: rotate(359deg);
+        transform: rotate(359deg);
+    }
+}
+
+@keyframes backSpin {
+    0% {
+        -webkit-transform: rotate(359deg);
+        transform: rotate(359deg);
+    }
+    100% {
+        -webkit-transform: rotate(0deg);
+        transform: rotate(0deg);
+    }
+}
+
+@keyframes scan {
+    0% {
+        height: 0;
+    }
+    100% {
+        opacity: 0;
+        height: 400px;
+    }
+}
+
+.animation-breath {
+    animation: breath 3s infinite ease-in-out alternate;
+    -webkit-animation: breath 3s infinite ease-in-out alternate;
+}
+
+.animation-flash-one {
+    animation: flash .2s 5 ease-in-out alternate;
+    -webkit-animation: flash .2s 5 ease-in-out alternate;
+}
+
+.animation-flash {
+    animation: flash .2s infinite ease-in-out alternate;
+    -webkit-animation: flash .2s infinite ease-in-out alternate;
+}
+
+.animation-flash-fast {
+    animation: flash .1s infinite ease-in-out alternate;
+    -webkit-animation: flash .1s infinite ease-in-out alternate;
+}
+
+.animation-flash-slow {
+    animation: flash .5s infinite ease-in-out alternate;
+    -webkit-animation: flash .5s infinite ease-in-out alternate;
+}
+
+.animation-square-spin {
+    -webkit-animation: square-spin 3s 0s cubic-bezier(.09, .57, .49, .9) infinite;
+    animation: square-spin 3s 0s cubic-bezier(.09, .57, .49, .9) infinite;
+}
+
+.animation-slide-in-up {
+    animation-duration: 1s;
+    animation-fill-mode: both;
+    animation-name: slideInUp;
+}
+
+.animation-slide-in-left {
+    animation-duration: 1s;
+    animation-fill-mode: both;
+    animation-name: slideInLeft;
+}
+
+.animation-slide-out-right {
+    animation-duration: 1s;
+    animation-fill-mode: both;
+    animation-name: slideOutRight;
+}
+
+.animation-fade-in {
+    animation-duration: 1s;
+    animation-fill-mode: both;
+    animation-name: fadeIn;
+}
+
+.animation-tada {
+    animation-duration: 1s;
+    animation-fill-mode: both;
+    animation-name: tada;
+}
+
+.animation-backspin {
+    animation: backSpin 2s linear infinite;
+    -webkit-animation: backSpin 2s linear infinite;
+}
+
+.animation-spin {
+    animation: spin 2s linear infinite;
+    -webkit-animation: spin 2s linear infinite;
+}
+
+.animation-bounce-in-up {
+    animation: bounceInUp .5s linear;
+    -webkit-animation: bounceInUp .5s linear;
+}
+
+.animation-bounce {
+    -webkit-animation: bounce 1.5s infinite;
+    -o-animation: bounce 1.5s infinite;
+    animation: bounce 1.5s infinite;
+}

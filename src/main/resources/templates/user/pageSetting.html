@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>页面管理</title>
+    <th:block th:replace="~{common/commonCss}"></th:block>
+</head>
+<body class="sidebar-fixed header-fixed">
+<div class="page-wrapper">
+    <th:block th:replace="~{user/common/header}"></th:block>
+
+    <div class="main-container">
+        <th:block th:replace="~{user/common/sideBar}"></th:block>
+
+        <div class="content" v-cloak id="app">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <span>页面管理</span>
+                    <div class="f-fr">
+                        <a href="/user/page/editor">
+                            <button type="button" class="btn btn-sm btn-outline-primary">新增页面</button>
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>名称</th>
+                                <th>备注</th>
+                                <th>创建时间</th>
+                                <th>操作</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr v-for="item in data.records">
+                                <td>{{item.id}}</td>
+                                <td>{{item.name}}</td>
+                                <td>{{item.mark}}</td>
+                                <td>
+                                    <span v-if="item.createTime">{{new Date(item.createTime).Format('yyyy/MM/dd hh:mm')}}</span>
+                                </td>
+                                <td>
+                                    <a :href="'/user/page/editor?id='+item.id">
+                                        <button type="button" class="btn btn-sm btn-primary">编辑</button>
+                                    </a>
+                                    <button @click="remove(item.id)" type="button" class="btn btn-sm btn-danger">删除
+                                    </button>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                        <div v-if="!data.records.length" class="f-tac f-info">
+                            <span class="f-fs18">暂无数据</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<th:block th:replace="~{common/commonJs}"></th:block>
+<th:block th:replace="~{common/commonJs2}"></th:block>
+<script type="text/javascript">
+    (function () {
+        var app = new Vue({
+            data: {
+                data: {records: []},
+            },
+            mounted: function () {
+                this.getData();
+            },
+            methods: {
+                remove: function (id) {
+                    confirm('确定要删除吗？') && CommonUtils.request({
+                        url: 'page/' + id, config: {method: 'DELETE'},
+                        success: function (res) {
+                            CommonUtils.toast(res.data.msg);
+                            app.getData();
+                        }
+                    });
+                },
+                getData: function () {
+                    CommonUtils.request({
+                        url: '/page', success: function (res) {
+                            app.data.records = res.data.content || [];
+                        }
+                    })
+                }
+            }
+        }).$mount('#app');
+    })();
+</script>
+</body>
+</html>

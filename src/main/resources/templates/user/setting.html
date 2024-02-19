@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>修改密码</title>
+    <th:block th:replace="~{common/commonCss}"></th:block>
+</head>
+<body class="sidebar-fixed header-fixed">
+<div class="page-wrapper">
+    <th:block th:replace="~{user/common/header}"></th:block>
+
+    <div class="main-container">
+        <th:block th:replace="~{user/common/sideBar}"></th:block>
+
+        <div class="content" id="app" v-cloak>
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header bg-light">
+                                修改密码
+                            </div>
+
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <label for="normal-input" class="form-control-label">输入旧密码</label>
+                                    <input id="normal-input" v-model="form.oldPwd" class="form-control" type="password"
+                                           placeholder="输入旧密码" maxlength="16">
+                                </div>
+                                <div class="form-group">
+                                    <label for="normal-input1" class="form-control-label">输入新密码</label>
+                                    <input id="normal-input1" v-model="form.newPwd" class="form-control" type="password"
+                                           placeholder="输入新密码" maxlength="16">
+                                </div>
+                                <div class="form-group">
+                                    <label for="normal-input2" class="form-control-label">确认输入新密码</label>
+                                    <input id="normal-input2" v-model="rePwd" class="form-control" type="password"
+                                           placeholder="重复输入新密码" maxlength="16">
+                                </div>
+                            </div>
+
+                            <div class="card-footer">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <button type="button" @click="resetPwd" class="btn btn-primary px-5">确认修改
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<th:block th:replace="~{common/commonJs2}"></th:block>
+<th:block th:replace="~{common/commonJs}"></th:block>
+<script type="text/javascript">
+    (function () {
+        var app = new Vue({
+            data: {
+                form: {oldPwd: null, newPwd: null},
+                rePwd: null
+            },
+            methods: {
+                resetPwd: function () {
+                    if (!this.form.oldPwd || !this.form.newPwd || !this.rePwd) {
+                        CommonUtils.toast('请输入密码');
+                        return false;
+                    }
+                    if (this.form.newPwd != this.rePwd) {
+                        CommonUtils.toast('两次密码不一致');
+                        return false;
+                    }
+                    CommonUtils.request({
+                        url: '/user/resetPwd',
+                        data: this.form,
+                        config: {method: 'POST'},
+                        success: function (res) {
+                            CommonUtils.toast(res.data.msg);
+                            console.log(app.form);
+                            app.form.oldPwd = null;
+                            app.form.newPwd = null;
+                            app.rePwd = null;
+                        },
+                        failure: function (res) {
+                            CommonUtils.toast(res.data.msg);
+                        }
+                    })
+                }
+            }
+        }).$mount('#app');
+    })();
+</script>
+</body>
+</html>

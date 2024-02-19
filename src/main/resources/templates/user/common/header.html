@@ -1,0 +1,38 @@
+<nav class="navbar page-header" xmlns:th="http://www.thymeleaf.org">
+    <a href="#" class="btn btn-link sidebar-mobile-toggle d-md-none mr-auto">
+        <i class="fa fa-bars"></i>
+    </a>
+
+    <a class="navbar-brand" href="#">
+        <!--<img src="./imgs/logo.png" alt="logo">-->
+        <span>特价抢购</span>
+    </a>
+
+    <a href="#" class="btn btn-link sidebar-toggle d-md-down-none">
+        <i class="fa fa-bars"></i>
+    </a>
+
+    <ul class="navbar-nav ml-auto">
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-haspopup="true"
+               aria-expanded="false">
+                <span class="small ml-1 d-md-down-none" th:text="${session.user_session.nickname}"></span>
+            </a>
+
+            <div class="dropdown-menu dropdown-menu-right">
+                <a href="/user/safe" class="dropdown-item" th:if="${session.user_session.roleId == 1}">
+                    <i class="icon-shield"></i> 账号安全
+                </a>
+                <a href="/user/profile" class="dropdown-item">
+                    <i class="fa fa-user"></i> 个人资料
+                </a>
+                <a href="/user/setting" class="dropdown-item">
+                    <i class="fa fa-wrench"></i> 修改密码
+                </a>
+                <a href="/user/logout" class="dropdown-item">
+                    <i class="fa fa-sign-out-alt"></i> 退出
+                </a>
+            </div>
+        </li>
+    </ul>
+</nav>

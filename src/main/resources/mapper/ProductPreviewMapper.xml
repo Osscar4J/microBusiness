@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.zhao.micro.mapper.ProductPreviewMapper">
+    <resultMap type="com.zhao.micro.entity.ProductPreview" id="BaseResultMap">
+        <id column="id" property="id"/>
+        <result column="create_time" property="createTime"/>
+        <result column="ip" property="ip"/>
+    </resultMap>
+
+    <resultMap id="DetailRM" type="com.zhao.micro.entity.ProductPreview" extends="BaseResultMap">
+        <association property="product" javaType="com.zhao.micro.entity.Product">
+            <id column="pId" property="id"/>
+            <result column="pName" property="name"/>
+        </association>
+        <association property="proxy" javaType="com.zhao.micro.entity.User">
+            <id column="proId" property="id"/>
+            <result column="proAccount" property="account"/>
+            <result column="proNickname" property="nickname"/>
+        </association>
+        <association property="seller" javaType="com.zhao.micro.entity.User">
+            <id column="sId" property="id"/>
+            <result column="sAccount" property="account"/>
+            <result column="sNickname" property="nickname"/>
+        </association>
+    </resultMap>
+
+    <sql id="BaseSelectColumn">
+        self.id, self.create_time, self.ip
+    </sql>
+
+    <sql id="LinkedSql">
+        from product_preview_tb self
+    </sql>
+
+    <sql id="PageConditionSql">
+        where 1=1
+        <if test="reqvo.prodId!=null">
+            and self.prod_id=#{reqvo.prodId}
+        </if>
+        <if test="reqvo.sellerId!=null">
+            and self.seller_id=#{reqvo.sellerId}
+        </if>
+        <if test="reqvo.proxyId!=null">
+            and self.proxy_id=#{reqvo.proxyId}
+        </if>
+    </sql>
+
+    <select id="selectPage" resultMap="DetailRM">
+        select
+        <include refid="BaseSelectColumn"></include>
+        ,p.id pId, p.name pName
+        ,pro.id proId, pro.account proAccount, pro.nickname proNickname
+        ,s.id sId, s.account sAccount, s.nickname sNickname
+        <include refid="LinkedSql"></include>
+        left join product_tb p on p.id=self.prod_id
+        left join user_tb pro on pro.id=self.proxy_id
+        left join user_tb s on s.id=self.seller_id
+        <include refid="PageConditionSql"></include>
+        order by self.id desc
+    </select>
+
+</mapper>

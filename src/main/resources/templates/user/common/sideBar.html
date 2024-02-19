@@ -1,0 +1,88 @@
+<div class="sidebar" xmlns:th="http://www.thymeleaf.org">
+    <nav class="sidebar-nav">
+        <ul class="nav" th:if="${session.user_session.roleId == 1}">
+            <li class="nav-title">导航</li>
+            <li class="nav-item">
+                <a href="/user/index" th:class="${'nav-link ' + (#request.getRequestURI()=='/user/index'?'active':'')}">
+                    <i class="icon icon-speedometer"></i> 控制台
+                </a>
+            </li>
+            <li class="nav-item nav-dropdown">
+                <a href="#" class="nav-link nav-dropdown-toggle">
+                    <i class="icon icon-target"></i> 微信设置 <i class="fa fa-caret-left"></i>
+                </a>
+                <ul class="nav-dropdown-items">
+                    <li class="nav-item">
+                        <a href="/user/wechat"
+                           th:class="${'nav-link ' + (#request.getRequestURI()=='/user/wechat'?'active':'')}">
+                            <i class="icon-bubbles"></i> 菜单列表
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/user/page"
+                           th:class="${'nav-link ' + (#request.getRequestURI()=='/user/page'?'active':'')}">
+                            <i class="icon-social-dropbox"></i> 页面管理
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            <li class="nav-item">
+                <a href="/user/users" th:class="${'nav-link ' + (#request.getRequestURI()=='/user/users'?'active':'')}">
+                    <i class="fa fa-user"></i> 代理管理
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/user/products"
+                   th:class="${'nav-link ' + (#request.getRequestURI()=='/user/products'?'active':'')}">
+                    <i class="fa fa-shopping-bag"></i> 产品管理
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/user/order" th:class="${'nav-link ' + (#request.getRequestURI()=='/user/order'?'active':'')}">
+                    <i class="fa fa-list"></i> 订单管理
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/user/domain"
+                   th:class="${'nav-link ' + (#request.getRequestURI()=='/user/domain'?'active':'')}">
+                    <i class="fa fa-sitemap"></i> 域名管理
+                </a>
+            </li>
+        </ul>
+
+        <ul class="nav" th:if="${session.user_session.roleId == 2}">
+            <li class="nav-title">导航</li>
+            <li class="nav-item">
+                <a href="/user/index" th:class="${'nav-link ' + (#request.getRequestURI()=='/user/index'?'active':'')}">
+                    <i class="icon icon-speedometer"></i> 控制台
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/user/users" th:class="${'nav-link ' + (#request.getRequestURI()=='/user/users'?'active':'')}">
+                    <i class="fa fa-user"></i> 员工管理
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/user/performance"
+                   th:class="${'nav-link ' + (#request.getRequestURI()=='/user/performance'?'active':'')}">
+                    <i class="fa fa-chart-line"></i> 员工业绩
+                </a>
+            </li>
+        </ul>
+
+        <ul class="nav" th:if="${session.user_session.roleId == 3}">
+            <li class="nav-title">导航</li>
+            <li class="nav-item">
+                <a href="/user/index" th:class="${'nav-link ' + (#request.getRequestURI()=='/user/index'?'active':'')}">
+                    <i class="icon icon-speedometer"></i> 个人中心
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/product/popularize"
+                   th:class="${'nav-link ' + (#request.getRequestURI()=='/product/popularize'?'active':'')}">
+                    <i class="fa fa-sitemap"></i> 产品推广
+                </a>
+            </li>
+        </ul>
+    </nav>
+</div>
